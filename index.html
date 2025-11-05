@@ -73,6 +73,7 @@
   </div>
 
   <script>
+    // URL della Web App (deve finire con /exec) – Deployment: Execute as Me, Access Anyone
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec';
 
     const cardContainer = document.getElementById('card-container');
@@ -85,23 +86,47 @@
       .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
       .replaceAll('"','&quot;').replaceAll("'","&#39;");
 
-    // --- API helpers (fetch CORS-friendly: simple requests) ---
-    async function apiGet(params = {}) {
-      const qs = new URLSearchParams(params).toString();
-      const url = qs ? `${APPS_SCRIPT_URL}?${qs}` : APPS_SCRIPT_URL;
-      const res = await fetch(url, { method: 'GET' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
+    // --- JSONP helper per bypassare CORS su GET ---
+    function jsonp(url, params = {}, timeoutMs = 10000) {
+      return new Promise((resolve, reject) => {
+        const cb = `cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const all = Object.assign({}, params, { callback: cb, _: Date.now() });
+        const qs = new URLSearchParams(all).toString();
+        const script = document.createElement('script');
+        script.src = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
+        let settled = false;
+        const cleanup = () => {
+          if (script.parentNode) script.parentNode.removeChild(script);
+          try { delete window[cb]; } catch { window[cb] = undefined; }
+        };
+        const t = setTimeout(() => {
+          if (settled) return; settled = true; cleanup(); reject(new Error('JSONP timeout'));
+        }, timeoutMs);
+        window[cb] = (data) => { if (settled) return; settled = true; clearTimeout(t); cleanup(); resolve(data); };
+        script.onerror = () => { if (settled) return; settled = true; clearTimeout(t); cleanup(); reject(new Error('JSONP error')); };
+        document.body.appendChild(script);
+      });
     }
 
-    async function apiPost(params = {}) {
-      const res = await fetch(APPS_SCRIPT_URL, {
+    // --- POST helpers (opaque, nessuna lettura della risposta necessaria) ---
+    async function postCreate(title, description) {
+      const body = new URLSearchParams({ action: 'create', title, description });
+      await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-        body: new URLSearchParams(params),
+        body
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
+    }
+
+    async function postLike(row) {
+      const body = new URLSearchParams({ action: 'like', row: String(row) });
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body
+      });
     }
 
     let cardsData = [];
@@ -178,7 +203,7 @@
       console.log('[UI] Loading cards...');
       loader.hidden = false;
       try {
-        const data = await apiGet({ action: 'list' });
+        const data = await jsonp(APPS_SCRIPT_URL, { action: 'list' });
         const items = Array.isArray(data) ? data : [];
         cardsData = items.map(r => ({
           id: r.row,
@@ -192,32 +217,20 @@
         initNavigation();
       } catch (e) {
         console.error('[UI] loadCards error', e);
-        alert('Errore durante il caricamento: ' + e.message);
+        alert('Errore di rete durante il caricamento');
       } finally {
         loader.hidden = true;
       }
     }
 
     async function vote(id) {
-      console.log('[UI] Vote', id);
-      try {
-        await apiPost({ action: 'like', row: String(id) });
-      } catch (e) {
-        console.error('[UI] vote error', e);
-        alert('Errore sul voto: ' + e.message);
-      }
+      try { await postLike(id); } catch (e) { console.error('[UI] vote error', e); }
       loadCards();
     }
     window.vote = vote;
 
     async function sendSuggestion(title, subtitle) {
-      console.log('[UI] Send suggestion', { title, subtitle });
-      try {
-        await apiPost({ action: 'create', title, description: subtitle });
-      } catch (e) {
-        console.error('[UI] sendSuggestion error', e);
-        alert('Errore durante invio: ' + e.message);
-      }
+      try { await postCreate(title, subtitle); } catch (e) { console.error('[UI] create error', e); }
       loadCards();
     }
 

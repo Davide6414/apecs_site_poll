@@ -1,301 +1,150 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>APECS Italy - Suggerimenti</title>
   <style>
+    :root { --brand:#10a37f; --brandHover:#0e8f6e; }
+    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-family: sans-serif;
-      background: #f7f7f8;
-      overflow: hidden;
+      margin: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
+      font-family: sans-serif; background: #f7f7f8; overflow: hidden;
     }
-
-    .card-container {
-      position: relative;
-      width: 90%;
-      max-width: 600px;
-      height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
+    .card-container { position: relative; width: 90%; max-width: 600px; height: 300px; display: flex; align-items: center; justify-content: center; }
     .card {
-      position: absolute;
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      padding: 2rem;
-      text-align: center;
-      width: 100%;
-      opacity: 0;
-      transform: translateX(50px);
-      transition: opacity 0.4s ease, transform 0.4s ease;
+      position: absolute; background: #fff; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,.1);
+      padding: 2rem; text-align: center; width: 100%; opacity: 0; transform: translateX(50px);
+      transition: opacity .4s ease, transform .4s ease;
     }
-
-    .card.active {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .card.exit-left {
-      opacity: 0;
-      transform: translateX(-50px);
-    }
-
-    .card.exit-right {
-      opacity: 0;
-      transform: translateX(50px);
-    }
-
-    .card h3 {
-      color: #10a37f;
-      margin-bottom: 0.5rem;
-    }
-
-    .card p {
-      color: #333;
-      font-size: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
+    .card.active { opacity: 1; transform: translateX(0); }
+    .card.exit-left { opacity: 0; transform: translateX(-50px); }
+    .card.exit-right { opacity: 0; transform: translateX(50px); }
+    .card h3 { color: var(--brand); margin-bottom: .5rem; }
+    .card p { color: #333; font-size: 1rem; margin-bottom: 1.5rem; }
     .vote-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: #10a37f;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 0.6rem 1.2rem;
-      cursor: pointer;
-      font-size: 1rem;
+      display: inline-flex; align-items: center; gap: .5rem; background: var(--brand); color:#fff; border: none;
+      border-radius: 20px; padding:.6rem 1.2rem; cursor: pointer; font-size:1rem;
     }
-
-    .vote-btn:hover {
-      background: #0e8f6e;
-    }
-
-    .vote-btn svg {
-      width: 18px;
-      height: 18px;
-      fill: white;
-    }
-
-    .vote-count {
-      display: block;
-      margin-top: 0.5rem;
-      color: #555;
-      font-weight: bold;
-    }
-
-    .nav-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
+    .vote-btn:hover { background: var(--brandHover); }
+    .vote-btn svg { width: 18px; height: 18px; fill: #fff; }
+    .vote-count { display:block; margin-top:.5rem; color:#555; font-weight:bold; }
+    .nav-buttons { display:flex; justify-content:center; gap:1rem; margin-top:1rem; }
     .nav-buttons button {
-      background: #10a37f;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 0.6rem 1.2rem;
-      cursor: pointer;
-      font-size: 1rem;
+      background: var(--brand); color:#fff; border:none; border-radius:20px; padding:.6rem 1.2rem; cursor:pointer; font-size:1rem;
     }
-
-    .nav-buttons button:hover {
-      background: #0e8f6e;
-    }
-
+    .nav-buttons button:hover { background: var(--brandHover); }
     #message-box {
-      text-align: center;
-      background: white;
-      padding: 2rem 3rem;
-      border-radius: 20px;
-      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 600px;
-      margin-top: 3rem;
+      text-align:center; background:#fff; padding:2rem 3rem; border-radius:20px; box-shadow:0 2px 15px rgba(0,0,0,.1);
+      width:90%; max-width:600px; margin-top:3rem;
     }
-
-    h1 {
-      margin-bottom: 1rem;
-      color: #10a37f;
-      font-size: 1.5rem;
-    }
-
-    p {
-      color: #333;
-      margin-bottom: 1.5rem;
-      font-size: 1.1rem;
-    }
-
-    #input-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
+    h1 { margin-bottom:1rem; color: var(--brand); font-size:1.5rem; }
+    p { color:#333; margin-bottom:1.5rem; font-size:1.1rem; }
+    #input-container { display:flex; flex-direction:column; align-items:center; gap:.5rem; }
     #input-title, #input-subtitle {
-      width: 80%;
-      padding: 0.6rem 1rem;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      outline: none;
-      font-size: 1rem;
+      width:80%; padding:.6rem 1rem; border:1px solid #ccc; border-radius:10px; outline:none; font-size:1rem;
     }
-
     #send-btn {
-      margin-top: 0.5rem;
-      padding: 0.6rem 1rem;
-      background: #10a37f;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 1rem;
+      margin-top:.5rem; padding:.6rem 1rem; background: var(--brand); color:#fff; border:none; border-radius:20px; cursor:pointer; font-size:1rem;
     }
-
-    #send-btn:hover {
-      background: #0e8f6e;
-    }
-
-    #response {
-      margin-top: 1.5rem;
-      color: #10a37f;
-      font-weight: bold;
-      display: none;
-    }
+    #send-btn:hover { background: var(--brandHover); }
+    #response { margin-top:1.5rem; color: var(--brand); font-weight:bold; display:none; }
+    #loader { margin: .5rem 0 1rem; font-size:.95rem; color:#666; }
   </style>
 </head>
 <body>
   <div class="card-container" id="card-container"></div>
 
   <div class="nav-buttons">
-    <button id="prev">Indietro</button>
-    <button id="next">Avanti</button>
+    <button id="prev" type="button">Indietro</button>
+    <button id="next" type="button">Avanti</button>
   </div>
 
   <div id="message-box">
     <h1>Contribuisci allo sviluppo del sito APECS Italy</h1>
     <p>Inserisci un <b>titolo</b> e una <b>descrizione</b> per il tuo suggerimento.</p>
     <div id="input-container">
-      <input id="input-title" type="text" placeholder="Titolo del suggerimento">
-      <input id="input-subtitle" type="text" placeholder="Descrizione del suggerimento">
-      <button id="send-btn">Invia</button>
+      <input id="input-title" type="text" placeholder="Titolo del suggerimento" />
+      <input id="input-subtitle" type="text" placeholder="Descrizione del suggerimento" />
+      <button id="send-btn" type="button">Invia</button>
+      <div id="loader" hidden>Caricamento…</div>
     </div>
     <div id="response">Grazie per il tuo suggerimento!</div>
   </div>
 
   <script>
+    // URL della Web App (deve finire con /exec)
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec';
-    const cardContainer = document.getElementById('card-container');
 
+    const cardContainer = document.getElementById('card-container');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    const loader = document.getElementById('loader');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Escaping semplice per prevenire XSS nei contenuti
+    const esc = (s) => String(s || '')
+      .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+      .replaceAll('"','&quot;').replaceAll("'","&#39;");
+
+    // JSONP helper
     function jsonp(url, params = {}, timeoutMs = 10000) {
       return new Promise((resolve, reject) => {
         const cb = `cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        params = Object.assign({}, params, { callback: cb, _: Date.now() });
-        const qs = new URLSearchParams(params).toString();
+        const all = Object.assign({}, params, { callback: cb, _: Date.now() });
+        const qs = new URLSearchParams(all).toString();
         const script = document.createElement('script');
         script.src = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
-        let timeout = setTimeout(() => {
-          cleanup();
-          reject(new Error('JSONP timeout'));
+        let settled = false;
+        const cleanup = () => {
+          if (script.parentNode) script.parentNode.removeChild(script);
+          try { delete window[cb]; } catch { window[cb] = undefined; }
+        };
+        const t = setTimeout(() => {
+          if (settled) return; settled = true; cleanup(); reject(new Error('JSONP timeout'));
         }, timeoutMs);
-        function cleanup() {
-          clearTimeout(timeout);
-          try { delete window[cb]; } catch (_) { window[cb] = undefined; }
-          script.remove();
-        }
-        window[cb] = (data) => { cleanup(); resolve(data); };
-        script.onerror = () => { cleanup(); reject(new Error('JSONP error')); };
+        window[cb] = (data) => { if (settled) return; settled = true; clearTimeout(t); cleanup(); resolve(data); };
+        script.onerror = () => { if (settled) return; settled = true; clearTimeout(t); cleanup(); reject(new Error('JSONP error')); };
         document.body.appendChild(script);
       });
     }
 
-    async function loadCards() {
-      console.log('[UI] Loading cards...');
-      try {
-        const data = await jsonp(APPS_SCRIPT_URL, { action: 'list' });
-        const cards = Array.isArray(data) ? data.map(r => ({
-          id: r.row,
-          title: r.title,
-          subtitle: r.description,
-          votes: Number(r.likes || 0)
-        })) : [];
-        console.log('[UI] Cards loaded:', cards.length);
-        cardContainer.innerHTML = cards.map((c, i) => `
+    // Stato UI
+    let cardsData = [];
+    let currentIndex = 0;
+    let autoTimer = null;
+
+    function renderCards(cards) {
+      if (!cards.length) {
+        cardContainer.innerHTML = `
+          <div class="card active">
+            <h3>Nessun suggerimento ancora</h3>
+            <p>Inserisci il primo suggerimento qui sotto.</p>
+          </div>`;
+        return;
+      }
+      cardContainer.innerHTML = cards.map((c, i) => `
         <div class="card ${i === 0 ? 'active' : ''}" data-id="${c.id}">
-          <h3>${c.title}</h3>
-          <p>${c.subtitle}</p>
-          <button class="vote-btn" onclick="vote(${c.id})">
-            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M2 21h4V9H2v12zm20-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L13.17 2 6.59 8.59C6.22 8.95 6 9.45 6 10v9c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1z'/></svg>
+          <h3>${esc(c.title)}</h3>
+          <p>${esc(c.subtitle)}</p>
+          <button class="vote-btn" onclick="vote(${Number(c.id)})">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2 21h4V9H2v12zm20-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L13.17 2 6.59 8.59C6.22 8.95 6 9.45 6 10v9c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1z"/></svg>
             Vota
           </button>
-          <span class="vote-count">${c.votes} voti</span>
+          <span class="vote-count">${Number(c.votes)} voti</span>
         </div>`).join('');
-        initNavigation();
-      } catch (e) {
-        console.error('[UI] loadCards error', e);
-        alert('Errore di rete durante il caricamento');
-      }
-    }
-
-    async function vote(id) {
-      console.log('[UI] Vote', id);
-      try {
-        const body = new URLSearchParams({ action: 'like', row: String(id) });
-        await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors', // opaque response, avoids CORS issues
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-          body
-        });
-      } catch (e) {
-        console.error('[UI] vote error', e);
-        alert('Errore di rete sul voto');
-      }
-      loadCards();
-    }
-
-    async function sendSuggestion(title, subtitle) {
-      console.log('[UI] Send suggestion', {title, subtitle});
-      try {
-        const body = new URLSearchParams({ action: 'create', title, description: subtitle });
-        await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors', // opaque; we don't read the response
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-          body
-        });
-      } catch (e) {
-        console.error('[UI] sendSuggestion error', e);
-        alert('Errore di rete durante invio');
-      }
-      loadCards();
     }
 
     function initNavigation() {
-      const cards = document.querySelectorAll('.card');
-      const prev = document.getElementById('prev');
-      const next = document.getElementById('next');
-      let currentIndex = 0;
-      let timer = 10;
+      const cards = () => document.querySelectorAll('.card');
+      let countdown = 10;
 
       function transitionCard(nextIndex, direction) {
-        const currentCard = cards[currentIndex];
-        const nextCard = cards[nextIndex];
+        const list = cards();
+        if (!list.length) return;
+        const currentCard = list[currentIndex];
+        const nextCard = list[nextIndex];
+        if (!nextCard) return;
 
         currentCard.classList.remove('active');
         currentCard.classList.add(direction === 'next' ? 'exit-left' : 'exit-right');
@@ -306,41 +155,107 @@
         }, 400);
 
         currentIndex = nextIndex;
-        timer = 10;
+        countdown = 10;
       }
 
       prev.onclick = () => {
-        const nextIndex = (currentIndex - 1 + cards.length) % cards.length;
+        const list = cards(); if (!list.length) return;
+        const nextIndex = (currentIndex - 1 + list.length) % list.length;
         transitionCard(nextIndex, 'prev');
       };
 
       next.onclick = () => {
-        const nextIndex = (currentIndex + 1) % cards.length;
+        const list = cards(); if (!list.length) return;
+        const nextIndex = (currentIndex + 1) % list.length;
         transitionCard(nextIndex, 'next');
       };
 
-      setInterval(() => {
-        timer--;
-        if (timer <= 0) {
-          const nextIndex = (currentIndex + 1) % cards.length;
+      if (autoTimer) clearInterval(autoTimer);
+      autoTimer = setInterval(() => {
+        const list = cards(); if (list.length < 2) return;
+        if (--countdown <= 0) {
+          const nextIndex = (currentIndex + 1) % list.length;
           transitionCard(nextIndex, 'next');
         }
       }, 1000);
     }
 
-    document.getElementById('send-btn').onclick = () => {
-      const title = document.getElementById('input-title').value.trim();
-      const subtitle = document.getElementById('input-subtitle').value.trim();
-      if (!title || !subtitle) return;
-      sendSuggestion(title, subtitle);
-      document.getElementById('input-title').value = '';
-      document.getElementById('input-subtitle').value = '';
-      const response = document.getElementById('response');
-      response.style.display = 'block';
-      setTimeout(() => response.style.display = 'none', 3000);
-    };
+    async function loadCards() {
+      console.log('[UI] Loading cards...');
+      loader.hidden = false;
+      try {
+        const data = await jsonp(APPS_SCRIPT_URL, { action: 'list' });
+        const items = Array.isArray(data) ? data : [];
+        cardsData = items.map(r => ({
+          id: r.row,
+          title: r.title,
+          subtitle: r.description,
+          votes: Number(r.likes || 0)
+        }));
+        console.log('[UI] Cards loaded:', cardsData.length);
+        currentIndex = 0;
+        renderCards(cardsData);
+        initNavigation();
+      } catch (e) {
+        console.error('[UI] loadCards error', e);
+        alert('Errore di rete durante il caricamento');
+      } finally {
+        loader.hidden = true;
+      }
+    }
 
-    loadCards();
+    async function vote(id) {
+      console.log('[UI] Vote', id);
+      try {
+        const body = new URLSearchParams({ action: 'like', row: String(id) });
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body
+        });
+      } catch (e) {
+        console.error('[UI] vote error', e);
+        alert('Errore di rete sul voto');
+      }
+      loadCards();
+    }
+    window.vote = vote; // esposto per onclick inline
+
+    async function sendSuggestion(title, subtitle) {
+      console.log('[UI] Send suggestion', { title, subtitle });
+      try {
+        const body = new URLSearchParams({ action: 'create', title, description: subtitle });
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body
+        });
+      } catch (e) {
+        console.error('[UI] sendSuggestion error', e);
+        alert('Errore di rete durante invio');
+      }
+      loadCards();
+    }
+
+    // Handlers
+    document.addEventListener('DOMContentLoaded', () => {
+      sendBtn.onclick = () => {
+        const titleEl = document.getElementById('input-title');
+        const subtitleEl = document.getElementById('input-subtitle');
+        const title = titleEl.value.trim();
+        const subtitle = subtitleEl.value.trim();
+        if (!title || !subtitle) return;
+        sendSuggestion(title, subtitle);
+        titleEl.value = '';
+        subtitleEl.value = '';
+        const response = document.getElementById('response');
+        response.style.display = 'block';
+        setTimeout(() => response.style.display = 'none', 3000);
+      };
+      loadCards();
+    });
   </script>
 </body>
 </html>

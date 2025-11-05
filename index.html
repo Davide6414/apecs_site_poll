@@ -199,21 +199,42 @@
   </div>
 
   <script>
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec';
     const cardContainer = document.getElementById('card-container');
+
+    function jsonp(url, params = {}, timeoutMs = 10000) {
+      return new Promise((resolve, reject) => {
+        const cb = `cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        params = Object.assign({}, params, { callback: cb, _: Date.now() });
+        const qs = new URLSearchParams(params).toString();
+        const script = document.createElement('script');
+        script.src = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
+        let timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error('JSONP timeout'));
+        }, timeoutMs);
+        function cleanup() {
+          clearTimeout(timeout);
+          try { delete window[cb]; } catch (_) { window[cb] = undefined; }
+          script.remove();
+        }
+        window[cb] = (data) => { cleanup(); resolve(data); };
+        script.onerror = () => { cleanup(); reject(new Error('JSONP error')); };
+        document.body.appendChild(script);
+      });
+    }
 
     async function loadCards() {
       console.log('[UI] Loading cards...');
       try {
-        const res = await fetch('/api/cards');
-        const text = await res.text();
-        let cards;
-        try { cards = JSON.parse(text); } catch (_) { cards = []; }
-        if (!res.ok) {
-          console.error('[UI] /api/cards failed', res.status, text);
-          alert('Errore nel caricamento dei suggerimenti');
-          return;
-        }
-        console.log('[UI] Cards loaded:', Array.isArray(cards) ? cards.length : cards);
+        const data = await jsonp(APPS_SCRIPT_URL, { action: 'list' });
+        const cards = Array.isArray(data) ? data.map(r => ({
+          id: r.row,
+          title: r.title,
+          subtitle: r.description,
+          votes: Number(r.likes || 0)
+        })) : [];
+        console.log('[UI] Cards loaded:', cards.length);
         cardContainer.innerHTML = cards.map((c, i) => `
         <div class="card ${i === 0 ? 'active' : ''}" data-id="${c.id}">
           <h3>${c.title}</h3>
@@ -234,12 +255,13 @@
     async function vote(id) {
       console.log('[UI] Vote', id);
       try {
-        const res = await fetch(`/api/vote/${id}`, {method: 'POST'});
-        const text = await res.text();
-        if (!res.ok) {
-          console.error('[UI] /api/vote failed', res.status, text);
-          alert('Voto non riuscito');
-        }
+        const body = new URLSearchParams({ action: 'like', row: String(id) });
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors', // opaque response, avoids CORS issues
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body
+        });
       } catch (e) {
         console.error('[UI] vote error', e);
         alert('Errore di rete sul voto');
@@ -250,18 +272,13 @@
     async function sendSuggestion(title, subtitle) {
       console.log('[UI] Send suggestion', {title, subtitle});
       try {
-        const res = await fetch('/api/suggest', {
+        const body = new URLSearchParams({ action: 'create', title, description: subtitle });
+        await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({title, subtitle})
+          mode: 'no-cors', // opaque; we don't read the response
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body
         });
-        const text = await res.text();
-        if (!res.ok) {
-          console.error('[UI] /api/suggest failed', res.status, text);
-          alert('Invio non riuscito');
-        } else {
-          console.log('[UI] Suggestion sent', text);
-        }
       } catch (e) {
         console.error('[UI] sendSuggestion error', e);
         alert('Errore di rete durante invio');

@@ -92,13 +92,13 @@ function doGet(e) {
   const action = ((e && e.parameter && e.parameter.action) || 'list').toLowerCase();
   try {
     if (action === 'list') {
-      return json_(list_());
+      return jsonOrJsonp_(e, list_());
     } else if (action === 'health') {
-      return json_({ ok: true });
+      return jsonOrJsonp_(e, { ok: true });
     }
     throw new Error('unknown action');
   } catch (err) {
-    return json_({ error: String(err && err.message || err) });
+    return jsonOrJsonp_(e, { error: String(err && err.message || err) });
   }
 }
 
@@ -129,6 +129,18 @@ function json_(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function jsonOrJsonp_(e, obj) {
+  const cb = e && e.parameter ? e.parameter.callback : null;
+  if (cb) {
+    // JSONP response for cross-origin GET without CORS
+    const body = `${cb}(${JSON.stringify(obj)})`;
+    return ContentService
+      .createTextOutput(body)
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return json_(obj);
+}
+
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('Suggestions API')
@@ -141,4 +153,3 @@ function menuPreview_() {
   const items = list_();
   SpreadsheetApp.getUi().alert('Items: ' + items.length);
 }
-

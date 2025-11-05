@@ -2,7 +2,7 @@ import os
 from typing import List, Dict, Optional
 
 from flask import Flask, render_template, send_from_directory, Response, request, jsonify
-import pandas as pd
+import requests
 
 
 app = Flask(
@@ -12,17 +12,29 @@ app = Flask(
     template_folder="templates",
 )
 
-
-def get_worksheet() -> List[Dict]:
-    """Fetch public CSV of the Google Sheet and return list of records.
-
-    This uses a published CSV URL (read-only). No credentials required.
-    """
-    url = (
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vR-Iwmx2-z6VBWLFbIPg5b8MKjr6fmKtKk0YB0bVMmI9DEOhm67hQBesYeyIp1oOGzXEfY4SV1ckRKh/pub?output=csv"
+def _apps_script_url() -> str:
+    return os.environ.get(
+        "APPS_SCRIPT_URL",
+        # Fallback to provided URL if env var missing
+        "https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec",
     )
-    df = pd.read_csv(url)
-    return df.to_dict(orient="records")
+
+
+def _script_get(action: str) -> Dict:
+    url = _apps_script_url()
+    r = requests.get(url, params={"action": action}, timeout=15)
+    r.raise_for_status()
+    return r.json()
+
+
+def _script_post(action: str, payload: Dict) -> Dict:
+    url = _apps_script_url()
+    data = dict(payload)
+    data["action"] = action
+    # Send JSON; Apps Script handler supports JSON and form-encoded
+    r = requests.post(url, json=data, timeout=15)
+    r.raise_for_status()
+    return r.json()
 
 
 def _safe_int(v: Optional[str], default: int = 0) -> int:
@@ -34,40 +46,55 @@ def _safe_int(v: Optional[str], default: int = 0) -> int:
 
 @app.route("/api/suggestions", methods=["GET"])
 def list_suggestions():
-    records = get_worksheet()
-    suggestions: List[Dict] = []
-    # Try to map case-insensitively
-    for idx, rec in enumerate(records, start=2):  # 2 to mirror sheet row numbering
-        keys = {k.lower(): k for k in rec.keys() if isinstance(k, str)}
-        def g(name: str) -> Optional[str]:
-            return rec.get(keys.get(name.lower(), name), "")
-        title = g("Title") or ""
-        description = g("Description") or ""
-        likes = _safe_int(g("Likes") or 0, 0)
-        if not title and not description:
-            continue
-        suggestions.append({
-            "row": idx,
-            "title": str(title),
-            "description": str(description),
-            "likes": likes,
-        })
-    return jsonify(suggestions)
+    try:
+        data = _script_get("list")
+        if isinstance(data, dict) and data.get("error"):
+            return jsonify({"error": data.get("error")}), 502
+        if not isinstance(data, list):
+            return jsonify([])
+        # Normalize types
+        out: List[Dict] = []
+        for rec in data:
+            if not isinstance(rec, dict):
+                continue
+            out.append({
+                "row": int(rec.get("row", 0) or 0),
+                "title": str(rec.get("title", "") or ""),
+                "description": str(rec.get("description", "") or ""),
+                "likes": _safe_int(rec.get("likes", 0), 0),
+            })
+        return jsonify(out)
+    except requests.RequestException as e:
+        return jsonify({"error": f"Apps Script unreachable: {e}"}), 502
 
 
 @app.route("/api/suggestions", methods=["POST"])
 def create_suggestion():
-    # With public CSV, write operations are not supported.
-    return jsonify({
-        "error": "Scrittura non supportata con CSV pubblico. Usa un service account o un webhook Apps Script."
-    }), 501
+    data = request.get_json(silent=True) or {}
+    title = (data.get("title") or "").strip()
+    description = (data.get("description") or "").strip()
+    if not title:
+        return jsonify({"error": "'title' è obbligatorio"}), 400
+    try:
+        resp = _script_post("create", {"title": title, "description": description})
+        if isinstance(resp, dict) and resp.get("error"):
+            return jsonify({"error": resp.get("error")}), 502
+        return jsonify({"status": "ok", "row": resp.get("row")}), 201
+    except requests.RequestException as e:
+        return jsonify({"error": f"Apps Script unreachable: {e}"}), 502
 
 
 @app.route("/api/suggestions/<int:row>/like", methods=["POST"])
 def like_suggestion(row: int):
-    return jsonify({
-        "error": "Scrittura non supportata con CSV pubblico. Usa un service account o un webhook Apps Script."
-    }), 501
+    if row < 2:
+        return jsonify({"error": "row non valido"}), 400
+    try:
+        resp = _script_post("like", {"row": row})
+        if isinstance(resp, dict) and resp.get("error"):
+            return jsonify({"error": resp.get("error")}), 502
+        return jsonify({"row": resp.get("row"), "likes": _safe_int(resp.get("likes", 0), 0)})
+    except requests.RequestException as e:
+        return jsonify({"error": f"Apps Script unreachable: {e}"}), 502
 
 
 # --- Compat: legacy endpoints used by existing frontend ---

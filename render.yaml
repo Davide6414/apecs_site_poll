@@ -6,3 +6,6 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -b 0.0.0.0:$PORT app:app
     autoDeploy: true
+    envVars:
+      - key: APPS_SCRIPT_URL
+        value: https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec

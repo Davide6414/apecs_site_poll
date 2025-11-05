@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APECS Italy - Suggerimenti</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      background: #f7f7f8;
+      overflow: hidden;
+    }
+
+    .card-container {
+      position: relative;
+      width: 90%;
+      max-width: 600px;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      position: absolute;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      text-align: center;
+      width: 100%;
+      opacity: 0;
+      transform: translateX(50px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .card.active {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .card.exit-left {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+
+    .card.exit-right {
+      opacity: 0;
+      transform: translateX(50px);
+    }
+
+    .card h3 {
+      color: #10a37f;
+      margin-bottom: 0.5rem;
+    }
+
+    .card p {
+      color: #333;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .vote-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #10a37f;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .vote-btn:hover {
+      background: #0e8f6e;
+    }
+
+    .vote-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: white;
+    }
+
+    .vote-count {
+      display: block;
+      margin-top: 0.5rem;
+      color: #555;
+      font-weight: bold;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .nav-buttons button {
+      background: #10a37f;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .nav-buttons button:hover {
+      background: #0e8f6e;
+    }
+
+    #message-box {
+      text-align: center;
+      background: white;
+      padding: 2rem 3rem;
+      border-radius: 20px;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 600px;
+      margin-top: 3rem;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+      color: #10a37f;
+      font-size: 1.5rem;
+    }
+
+    p {
+      color: #333;
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+    }
+
+    #input-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #input-title, #input-subtitle {
+      width: 80%;
+      padding: 0.6rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    #send-btn {
+      margin-top: 0.5rem;
+      padding: 0.6rem 1rem;
+      background: #10a37f;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    #send-btn:hover {
+      background: #0e8f6e;
+    }
+
+    #response {
+      margin-top: 1.5rem;
+      color: #10a37f;
+      font-weight: bold;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card-container" id="card-container"></div>
+
+  <div class="nav-buttons">
+    <button id="prev">Indietro</button>
+    <button id="next">Avanti</button>
+  </div>
+
+  <div id="message-box">
+    <h1>Contribuisci allo sviluppo del sito APECS Italy</h1>
+    <p>Inserisci un <b>titolo</b> e una <b>descrizione</b> per il tuo suggerimento.</p>
+    <div id="input-container">
+      <input id="input-title" type="text" placeholder="Titolo del suggerimento">
+      <input id="input-subtitle" type="text" placeholder="Descrizione del suggerimento">
+      <button id="send-btn">Invia</button>
+    </div>
+    <div id="response">Grazie per il tuo suggerimento!</div>
+  </div>
+
+  <script>
+    const cardContainer = document.getElementById('card-container');
+
+    async function loadCards() {
+      const res = await fetch('/api/cards');
+      const cards = await res.json();
+      cardContainer.innerHTML = cards.map((c, i) => `
+        <div class="card ${i === 0 ? 'active' : ''}" data-id="${c.id}">
+          <h3>${c.title}</h3>
+          <p>${c.subtitle}</p>
+          <button class="vote-btn" onclick="vote(${c.id})">
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M2 21h4V9H2v12zm20-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L13.17 2 6.59 8.59C6.22 8.95 6 9.45 6 10v9c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1z'/></svg>
+            Vota
+          </button>
+          <span class="vote-count">${c.votes} voti</span>
+        </div>`).join('');
+      initNavigation();
+    }
+
+    async function vote(id) {
+      await fetch(`/api/vote/${id}`, {method: 'POST'});
+      loadCards();
+    }
+
+    async function sendSuggestion(title, subtitle) {
+      await fetch('/api/suggest', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({title, subtitle})
+      });
+      loadCards();
+    }
+
+    function initNavigation() {
+      const cards = document.querySelectorAll('.card');
+      const prev = document.getElementById('prev');
+      const next = document.getElementById('next');
+      let currentIndex = 0;
+      let timer = 10;
+
+      function transitionCard(nextIndex, direction) {
+        const currentCard = cards[currentIndex];
+        const nextCard = cards[nextIndex];
+
+        currentCard.classList.remove('active');
+        currentCard.classList.add(direction === 'next' ? 'exit-left' : 'exit-right');
+
+        setTimeout(() => {
+          currentCard.classList.remove('exit-left', 'exit-right');
+          nextCard.classList.add('active');
+        }, 400);
+
+        currentIndex = nextIndex;
+        timer = 10;
+      }
+
+      prev.onclick = () => {
+        const nextIndex = (currentIndex - 1 + cards.length) % cards.length;
+        transitionCard(nextIndex, 'prev');
+      };
+
+      next.onclick = () => {
+        const nextIndex = (currentIndex + 1) % cards.length;
+        transitionCard(nextIndex, 'next');
+      };
+
+      setInterval(() => {
+        timer--;
+        if (timer <= 0) {
+          const nextIndex = (currentIndex + 1) % cards.length;
+          transitionCard(nextIndex, 'next');
+        }
+      }, 1000);
+    }
+
+    document.getElementById('send-btn').onclick = () => {
+      const title = document.getElementById('input-title').value.trim();
+      const subtitle = document.getElementById('input-subtitle').value.trim();
+      if (!title || !subtitle) return;
+      sendSuggestion(title, subtitle);
+      document.getElementById('input-title').value = '';
+      document.getElementById('input-subtitle').value = '';
+      const response = document.getElementById('response');
+      response.style.display = 'block';
+      setTimeout(() => response.style.display = 'none', 3000);
+    };
+
+    loadCards();
+  </script>
+</body>
+</html>

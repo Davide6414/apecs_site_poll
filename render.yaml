@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: apecs-stats-site
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -b 0.0.0.0:$PORT app:app
+    autoDeploy: true
+

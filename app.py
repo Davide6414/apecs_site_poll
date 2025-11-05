@@ -146,6 +146,28 @@ def like_suggestion(row: int):
     return jsonify({"row": row, "likes": new_val})
 
 
+# --- Compat: legacy endpoints used by existing frontend ---
+@app.route("/api/cards", methods=["GET"])
+def compat_list_cards():
+    return list_suggestions()
+
+
+@app.route("/api/suggest", methods=["POST"])
+def compat_create_suggest():
+    return create_suggestion()
+
+
+@app.route("/api/like", methods=["POST"])
+def compat_like():
+    data = request.get_json(silent=True) or {}
+    row = data.get("row")
+    try:
+        row = int(row)
+    except Exception:
+        return jsonify({"error": "Parametro 'row' mancante o non valido"}), 400
+    return like_suggestion(row)
+
+
 @app.route("/")
 def index():
     """Serve templates/index.html if present, otherwise the root index.html.

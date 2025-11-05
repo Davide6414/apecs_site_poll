@@ -202,9 +202,19 @@
     const cardContainer = document.getElementById('card-container');
 
     async function loadCards() {
-      const res = await fetch('/api/cards');
-      const cards = await res.json();
-      cardContainer.innerHTML = cards.map((c, i) => `
+      console.log('[UI] Loading cards...');
+      try {
+        const res = await fetch('/api/cards');
+        const text = await res.text();
+        let cards;
+        try { cards = JSON.parse(text); } catch (_) { cards = []; }
+        if (!res.ok) {
+          console.error('[UI] /api/cards failed', res.status, text);
+          alert('Errore nel caricamento dei suggerimenti');
+          return;
+        }
+        console.log('[UI] Cards loaded:', Array.isArray(cards) ? cards.length : cards);
+        cardContainer.innerHTML = cards.map((c, i) => `
         <div class="card ${i === 0 ? 'active' : ''}" data-id="${c.id}">
           <h3>${c.title}</h3>
           <p>${c.subtitle}</p>
@@ -214,20 +224,48 @@
           </button>
           <span class="vote-count">${c.votes} voti</span>
         </div>`).join('');
-      initNavigation();
+        initNavigation();
+      } catch (e) {
+        console.error('[UI] loadCards error', e);
+        alert('Errore di rete durante il caricamento');
+      }
     }
 
     async function vote(id) {
-      await fetch(`/api/vote/${id}`, {method: 'POST'});
+      console.log('[UI] Vote', id);
+      try {
+        const res = await fetch(`/api/vote/${id}`, {method: 'POST'});
+        const text = await res.text();
+        if (!res.ok) {
+          console.error('[UI] /api/vote failed', res.status, text);
+          alert('Voto non riuscito');
+        }
+      } catch (e) {
+        console.error('[UI] vote error', e);
+        alert('Errore di rete sul voto');
+      }
       loadCards();
     }
 
     async function sendSuggestion(title, subtitle) {
-      await fetch('/api/suggest', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({title, subtitle})
-      });
+      console.log('[UI] Send suggestion', {title, subtitle});
+      try {
+        const res = await fetch('/api/suggest', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({title, subtitle})
+        });
+        const text = await res.text();
+        if (!res.ok) {
+          console.error('[UI] /api/suggest failed', res.status, text);
+          alert('Invio non riuscito');
+        } else {
+          console.log('[UI] Suggestion sent', text);
+        }
+      } catch (e) {
+        console.error('[UI] sendSuggestion error', e);
+        alert('Errore di rete durante invio');
+      }
       loadCards();
     }
 

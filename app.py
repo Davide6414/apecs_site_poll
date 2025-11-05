@@ -35,7 +35,13 @@ def _script_get(action: str) -> Dict:
     r = requests.get(url, params=params, timeout=15)
     logger.debug(f"Apps Script GET status={r.status_code} body={r.text[:200]!r}")
     r.raise_for_status()
-    return r.json()
+    try:
+        return r.json()
+    except Exception as ex:
+        snippet = (r.text or "")[:500]
+        ctype = r.headers.get("content-type")
+        logger.error("Apps Script returned non-JSON (GET %s): status=%s, ctype=%s, body=%r", url, r.status_code, ctype, snippet)
+        raise requests.RequestException(f"Non-JSON from Apps Script (status {r.status_code})") from ex
 
 
 def _script_post(action: str, payload: Dict) -> Dict:
@@ -47,7 +53,13 @@ def _script_post(action: str, payload: Dict) -> Dict:
     r = requests.post(url, json=data, timeout=15)
     logger.debug(f"Apps Script POST status={r.status_code} body={r.text[:200]!r}")
     r.raise_for_status()
-    return r.json()
+    try:
+        return r.json()
+    except Exception as ex:
+        snippet = (r.text or "")[:500]
+        ctype = r.headers.get("content-type")
+        logger.error("Apps Script returned non-JSON (POST %s): status=%s, ctype=%s, body=%r", url, r.status_code, ctype, snippet)
+        raise requests.RequestException(f"Non-JSON from Apps Script (status {r.status_code})") from ex
 
 
 def _safe_int(v: Optional[str], default: int = 0) -> int:
@@ -143,6 +155,25 @@ def diag():
         info["list_error"] = str(e)
     logger.info("/api/diag %s", info)
     return jsonify(info)
+
+
+@app.route("/api/diag/raw", methods=["GET"])
+def diag_raw():
+    """Return raw response from Apps Script for a given action to debug non-JSON outputs."""
+    action = request.args.get("action", "list")
+    url = _apps_script_url()
+    try:
+        r = requests.get(url, params={"action": action}, timeout=15)
+        payload = {
+            "status": r.status_code,
+            "headers": {"content-type": r.headers.get("content-type"), "content-length": r.headers.get("content-length")},
+            "body_head": (r.text or "")[:1000],
+        }
+        logger.info("/api/diag/raw action=%s status=%s ctype=%s", action, r.status_code, r.headers.get("content-type"))
+        return jsonify(payload)
+    except Exception as e:
+        logger.exception("diag_raw failed: %s", e)
+        return jsonify({"error": str(e)}), 502
 
 
 # --- Compat: legacy endpoints used by existing frontend ---

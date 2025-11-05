@@ -6,8 +6,3 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -b 0.0.0.0:$PORT app:app
     autoDeploy: true
-    envVars:
-      - key: GOOGLE_SHEETS_SPREADSHEET_ID
-        value: 1-F9Rbkh6EYGxzCFkABZdvc03O5bt818cCz10HU8ndn0
-      - key: GOOGLE_SHEETS_CREDENTIALS
-        fromSecret: google-sheets-service-account

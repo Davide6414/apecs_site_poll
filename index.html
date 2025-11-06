@@ -160,9 +160,6 @@
       font-size:24px;
       font-weight:700;
       color:var(--text);
-      display:flex;
-      align-items:center;
-      gap:10px;
     }
 
     /* Controls */
@@ -324,9 +321,6 @@
       font-size:24px;
       font-weight:700;
       color:var(--text);
-      display:flex;
-      align-items:center;
-      gap:10px;
     }
     
     form{
@@ -432,11 +426,6 @@
       padding:48px 24px;
       color:var(--muted);
     }
-    
-    .empty-state-icon{
-      font-size:48px;
-      margin-bottom:16px;
-    }
 
     /* Inline Loading */
     .loading{
@@ -463,6 +452,216 @@
       0%,80%,100%{opacity:.2}
       40%{opacity:1}
     }
+
+    /* Welcome Modal */
+    .welcome-modal{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,.5);
+      backdrop-filter:blur(4px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:10000;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .3s ease;
+      padding:16px;
+    }
+    
+    .welcome-modal.show{
+      opacity:1;
+      pointer-events:all;
+    }
+    
+    .welcome-alert{
+      background:#fff;
+      border:2px solid var(--primary);
+      border-radius:16px;
+      padding:40px;
+      max-width:500px;
+      width:100%;
+      box-shadow:0 20px 40px rgba(0,0,0,.3);
+      text-align:center;
+      transform:scale(0.9);
+      transition:transform .3s cubic-bezier(.68,-.55,.265,1.55);
+    }
+    
+    .welcome-modal.show .welcome-alert{
+      transform:scale(1);
+    }
+    
+    .welcome-alert-icon{
+      width:64px;
+      height:64px;
+      background:linear-gradient(135deg, var(--primary), var(--primary-hover));
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin:0 auto 20px;
+      font-size:32px;
+      color:#fff;
+      font-weight:700;
+    }
+    
+    .welcome-alert-title{
+      font-size:28px;
+      font-weight:700;
+      color:var(--text);
+      margin:0 0 16px;
+    }
+    
+    .welcome-alert-message{
+      font-size:17px;
+      color:var(--muted);
+      line-height:1.6;
+      margin:0 0 28px;
+    }
+    
+    .welcome-alert-btn{
+      background:linear-gradient(135deg, var(--primary), var(--primary-hover));
+      color:#fff;
+      border:none;
+      padding:14px 40px;
+      border-radius:12px;
+      font-weight:700;
+      font-size:17px;
+      cursor:pointer;
+      transition:all .2s ease;
+      box-shadow:0 4px 12px rgba(30,136,229,.35);
+      width:100%;
+    }
+    
+    .welcome-alert-btn:hover{
+      transform:translateY(-2px);
+      box-shadow:0 6px 16px rgba(30,136,229,.45);
+    }
+    
+    .welcome-alert-btn:active{
+      transform:translateY(0);
+    }
+    
+    .welcome-alert-btn:focus-visible{
+      outline:3px solid var(--primary);
+      outline-offset:2px;
+    }
+    
+    @media (max-width:640px){
+      .welcome-alert{
+        padding:32px 24px;
+      }
+      
+      .welcome-alert-icon{
+        width:56px;
+        height:56px;
+        font-size:28px;
+      }
+      
+      .welcome-alert-title{
+        font-size:24px;
+      }
+      
+      .welcome-alert-message{
+        font-size:16px;
+      }
+    }
+
+    /* Toast Notification */
+    .toast{
+      position:fixed;
+      top:24px;
+      right:24px;
+      background:#fff;
+      border:2px solid var(--border);
+      border-radius:12px;
+      padding:16px 20px;
+      box-shadow:0 10px 25px rgba(30,136,229,.25);
+      display:flex;
+      align-items:center;
+      gap:12px;
+      z-index:10000;
+      opacity:0;
+      transform:translateX(400px);
+      transition:all .4s cubic-bezier(.68,-.55,.265,1.55);
+      max-width:calc(100vw - 48px);
+    }
+    
+    .toast.show{
+      opacity:1;
+      transform:translateX(0);
+    }
+    
+    .toast.success{
+      border-color:#4caf50;
+      background:linear-gradient(135deg, #ffffff, #f1f8f4);
+    }
+    
+    .toast.success .toast-icon{
+      color:#4caf50;
+      font-size:24px;
+    }
+    
+    .toast.like{
+      border-color:var(--orange);
+      background:linear-gradient(135deg, #ffffff, var(--orange-light));
+    }
+    
+    .toast.like .toast-icon{
+      color:var(--orange);
+      font-size:24px;
+      animation:heartbeat .6s ease;
+    }
+    
+    @keyframes heartbeat{
+      0%, 100%{transform:scale(1)}
+      25%{transform:scale(1.3)}
+      50%{transform:scale(1.1)}
+    }
+    
+    .toast-content{
+      flex:1;
+    }
+    
+    .toast-title{
+      font-weight:700;
+      color:var(--text);
+      margin:0 0 4px;
+      font-size:15px;
+    }
+    
+    .toast-message{
+      color:var(--muted);
+      margin:0;
+      font-size:14px;
+    }
+    
+    .toast-close{
+      background:none;
+      border:none;
+      color:var(--muted);
+      cursor:pointer;
+      font-size:20px;
+      padding:4px;
+      line-height:1;
+      transition:color .2s ease;
+    }
+    
+    .toast-close:hover{
+      color:var(--text);
+    }
+    
+    @media (max-width:640px){
+      .toast{
+        top:16px;
+        right:16px;
+        left:16px;
+        max-width:none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -481,7 +680,7 @@
     <!-- Carousel Section -->
     <section class="panel" aria-label="Suggerimenti esistenti">
       <div class="section-head">
-        <h2>💡 Suggerimenti</h2>
+        <h2>Suggerimenti</h2>
         <div class="controls">
           <button id="prevBtn" type="button" class="ctrl-btn" aria-label="Precedente">◀</button>
           <button id="nextBtn" type="button" class="ctrl-btn" aria-label="Successivo">▶</button>
@@ -500,7 +699,7 @@
 
     <!-- Form Section -->
     <section class="panel form-wrap" aria-label="Inserisci nuovo suggerimento">
-      <h2>✍️ Inserisci suggerimento</h2>
+      <h2>Inserisci suggerimento</h2>
       <form id="f"
             action="https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec"
             method="POST" target="sink" novalidate autocomplete="off">
@@ -527,6 +726,19 @@
 
   <iframe name="sink" style="display:none"></iframe>
 
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Welcome Modal -->
+  <div id="welcomeModal" class="welcome-modal">
+    <div class="welcome-alert">
+      <div class="welcome-alert-icon">i</div>
+      <h2 class="welcome-alert-title">Benvenuto!</h2>
+      <p class="welcome-alert-message">Aiutaci nello sviluppo del nuovo sito web APECS con qualche suggerimento</p>
+      <button id="welcomeBtn" class="welcome-alert-btn">Va bene!</button>
+    </div>
+  </div>
+
   <script>
     const API = "https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec";
 
@@ -535,6 +747,9 @@
     const btn = document.getElementById('btn');
     const sink = document.querySelector('iframe[name="sink"]');
     const loadingOverlay = document.getElementById('loadingOverlay');
+    const toastContainer = document.getElementById('toastContainer');
+    const welcomeModal = document.getElementById('welcomeModal');
+    const welcomeBtn = document.getElementById('welcomeBtn');
 
     const carousel = document.getElementById('carousel');
     const track = document.getElementById('track');
@@ -548,6 +763,58 @@
     let cur = 0;
     let timer = null;
     let resumeTimer = null;
+
+    // Toast Notification System
+    function showToast(type, title, message, duration = 4000) {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icons = {
+        success: '✓',
+        like: '♥',
+        info: 'i'
+      };
+      const icon = icons[type] || 'i';
+      
+      toast.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" aria-label="Chiudi">×</button>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      // Trigger animation
+      setTimeout(() => toast.classList.add('show'), 10);
+      
+      // Close button
+      const closeBtn = toast.querySelector('.toast-close');
+      closeBtn.addEventListener('click', () => removeToast(toast));
+      
+      // Auto remove
+      setTimeout(() => removeToast(toast), duration);
+    }
+    
+    function removeToast(toast) {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }
+
+    // Welcome Modal
+    function showWelcomeModal() {
+      setTimeout(() => {
+        welcomeModal.classList.add('show');
+      }, 500);
+    }
+    
+    function hideWelcomeModal() {
+      welcomeModal.classList.remove('show');
+    }
+    
+    welcomeBtn.addEventListener('click', hideWelcomeModal);
 
     // Snowflakes Animation
     const canvas = document.getElementById('snowCanvas');
@@ -669,7 +936,7 @@
 
     function renderCards(rows) {
       if (!rows.length) {
-        track.innerHTML = '<div class="card"><div class="empty-state"><div class="empty-state-icon">📝</div><p>Nessun suggerimento presente.</p><p>Sii il primo a inserirne uno!</p></div></div>';
+        track.innerHTML = '<div class="card"><div class="empty-state"><p>Nessun suggerimento presente.</p><p>Sii il primo a inserirne uno!</p></div></div>';
         calibrate(); 
         updateControlsState(); 
         return;
@@ -689,7 +956,7 @@
         <article class="card">
           <h3>${escapeHtml(o.titolo)}</h3>
           <div class="meta">
-            <span class="pill">👍 ${o.likes}</span>
+            <span class="pill">Like: ${o.likes}</span>
             <button type="button" class="like-btn" data-row="${o._row}">Metti like</button>
             <span class="timestamp">${fmtTs(o.ts)}</span>
           </div>
@@ -802,6 +1069,9 @@
       document.body.appendChild(form); 
       form.submit(); 
       setTimeout(() => form.remove(), 0);
+      
+      // Show toast notification
+      showToast('like', 'Like aggiunto!', 'Grazie per il tuo supporto');
     }
 
     f.addEventListener('submit', (e) => {
@@ -827,7 +1097,8 @@
       if (lastOp === 'save') { 
         setMsg('✓ Suggerimento inserito con successo!', 'ok'); 
         f.reset(); 
-        btn.disabled = false; 
+        btn.disabled = false;
+        showToast('success', 'Suggerimento inviato!', 'Il tuo suggerimento è stato aggiunto con successo');
       }
       loadAll(); 
       lastOp = null;
@@ -835,7 +1106,10 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       showLoading();
-      loadAll().then(() => hideLoading());
+      loadAll().then(() => {
+        hideLoading();
+        showWelcomeModal();
+      });
     });
   </script>
 </body>

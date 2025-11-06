@@ -16,12 +16,17 @@
     .err { color: #b00; }
     /* honeypot anti-bot */
     .hp { position: absolute; left: -9999px; top: -9999px; }
+
+    /* cards */
+    .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-top: 24px; }
+    .card { border: 1px solid #e3e3e3; border-radius: 10px; padding: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.05); background: #fff; }
+    .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .meta { font-size: .9rem; color: #555; margin-bottom: 6px; }
   </style>
 </head>
 <body>
   <h1>Inserisci suggerimento</h1>
 
-  <!-- URL /exec reale -->
   <form id="f"
         action="https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec"
         method="POST" target="sink" novalidate autocomplete="off">
@@ -54,16 +59,66 @@
     <div id="msg" class="msg" aria-live="polite"></div>
   </form>
 
-  <!-- Iframe nascosto per evitare CORS -->
+  <h2>Suggerimenti esistenti</h2>
+  <div id="cards" class="cards" aria-live="polite"></div>
+
+  <!-- Iframe nascosto per evitare CORS sul POST -->
   <iframe name="sink" style="display:none"></iframe>
 
   <script>
+    const API = "https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec";
+
     const f = document.getElementById('f');
     const msg = document.getElementById('msg');
     const btn = document.getElementById('btn');
     const sink = document.querySelector('iframe[name="sink"]');
+    const cards = document.getElementById('cards');
 
     const setMsg = (t, cls='') => { msg.textContent = t; msg.className = 'msg ' + cls; };
+
+    const escapeHtml = s => String(s ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+
+    const fmtTs = v => {
+      if (!v) return '';
+      // supporta stringa "yyyy-MM-dd HH:mm:ss" o seriale foglio
+      if (typeof v === 'number') {
+        const ms = Math.round((v - 25569) * 86400 * 1000);
+        return new Date(ms).toLocaleString('it-IT', { timeZone: 'Europe/Oslo' });
+      }
+      const d = new Date(String(v).replace(' ', 'T'));
+      return isNaN(d) ? '' : d.toLocaleString('it-IT', { timeZone: 'Europe/Oslo' });
+    };
+
+    async function loadAll() {
+      try {
+        const r = await fetch(`${API}?op=all`, { method: 'GET' });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.message || 'Errore lettura');
+        renderCards(j.rows || []);
+      } catch (err) {
+        cards.innerHTML = `<div class="card"><div class="meta">Errore</div><p>${escapeHtml(err.message)}</p></div>`;
+      }
+    }
+
+    function renderCards(rows) {
+      if (!rows.length) { cards.innerHTML = '<p>Nessun suggerimento presente.</p>'; return; }
+      const norm = rows.map(o => ({
+        titolo: o.titolo,
+        suggerimento: o.suggerimento,
+        likes: Number(o.numero_like ?? o.likes ?? 0),
+        ts: o.timestamp
+      }));
+      norm.sort((a,b) => (b.likes - a.likes) || (new Date(b.ts) - new Date(a.ts)));
+      cards.innerHTML = norm.map(o => `
+        <article class="card">
+          <h3>${escapeHtml(o.titolo)}</h3>
+          <div class="meta">👍 ${o.likes} · ${fmtTs(o.ts)}</div>
+          <p>${escapeHtml(o.suggerimento)}</p>
+        </article>`).join('');
+    }
 
     f.addEventListener('submit', (e) => {
       // blocca invii bot (honeypot)
@@ -74,13 +129,16 @@
       btn.disabled = true;
     });
 
-    // L’iframe carica una risposta (redirect incluso). Conferma ottimistica.
+    // Conferma ottimistica + refresh elenco
     sink.addEventListener('load', () => {
       setMsg('Inserito correttamente', 'ok');
       f.reset();
       f.likes.value = 0;
       btn.disabled = false;
+      loadAll();
     });
+
+    document.addEventListener('DOMContentLoaded', loadAll);
   </script>
 </body>
 </html>

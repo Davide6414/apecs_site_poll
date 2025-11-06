@@ -6,104 +6,85 @@
   <title>Suggerimenti</title>
   <style>
     :root{
-      --bg:#f6fbff; --card:#fff; --text:#0f2a3a; --muted:#5b7686;
-      --blue-700:#0b3d6d; --blue-500:#1f66a6; --azure-400:#4ab3ff; --orange-500:#ff7a1a;
-      --ring: rgba(74,179,255,.6); --radius:14px; --gap:14px;
-      --shadow: 0 8px 24px rgba(15,42,58,.08); --border: 1px solid rgba(15,42,58,.08);
+      --bg:#ffffff; --card:#ffffff; --text:#0f2a3a; --muted:#5b7686;
+      --blue-700:#0b3d6d; --orange-500:#ff7a1a;
+      --ring: rgba(0,0,0,.2);
+      --radius:14px; --gap:14px;
+      --shadow: 0 8px 24px rgba(0,0,0,.06);
+      --border: 1px solid #e6e6e6; /* neutro, niente azzurro */
     }
     @media (prefers-color-scheme: dark){
-      :root{ --bg:#0b1520; --card:#0f1e2a; --text:#eef7ff; --muted:#9fb3c1;
-        --blue-700:#79b8ff; --blue-500:#4ab3ff; --azure-400:#7bd0ff; --orange-500:#ffa559;
-        --ring: rgba(123,208,255,.5); --border:1px solid rgba(255,255,255,.08);
-        --shadow: 0 10px 30px rgba(0,0,0,.35);
+      :root{
+        --bg:#0e0e10; --card:#141418; --text:#eef7ff; --muted:#a9b4bd;
+        --blue-700:#9fd0ff; --orange-500:#ffa559;
+        --ring: rgba(255,255,255,.3);
+        --border:1px solid #2a2a2f; --shadow: 0 10px 30px rgba(0,0,0,.45);
       }
     }
-    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent}
     html,body{height:100%}
     body{
       margin:0; font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text); background:
-        radial-gradient(900px 500px at 80% -20%, rgba(74,179,255,.18), transparent 60%),
-        radial-gradient(700px 400px at -10% 10%, rgba(31,102,166,.14), transparent 60%),
-        linear-gradient(180deg, #ffffff00 0%, rgba(31,102,166,.06) 100%), var(--bg);
-      line-height:1.4;
+      color:var(--text); background: var(--bg); line-height:1.4;
     }
+    .container{ max-width:920px; margin:0 auto; padding: 12px clamp(12px,4vw,20px); }
 
-    .container{ max-width:920px; margin:0 auto; padding: 0 clamp(12px,4vw,20px); }
-
-    /* Header */
-    .hero{
-      padding: max(14px, env(safe-area-inset-top)) 0 12px;
-      background:
-        radial-gradient(900px 400px at 20% -40%, rgba(255,122,26,.18), transparent 70%),
-        linear-gradient(135deg, rgba(31,102,166,.20), rgba(11,61,109,.28));
-      color:#fff;
-    }
-    .hero-inner{ display:flex; align-items:end; justify-content:space-between; gap:12px; }
-    .brand{ display:grid; gap:4px; }
-    .brand h1{ margin:0; font-size: clamp(1.1rem, 3.8vw, 1.8rem); letter-spacing:.2px; }
-    .brand p{ margin:0; opacity:.9; font-size: clamp(.9rem, 2.8vw, 1rem); }
-
-    /* Panel */
+    /* Pannelli puliti, senza gradienti o bordi azzurri */
     .panel{
       margin: clamp(12px,3.5vw,18px) 0;
       background: var(--card);
       border: var(--border);
-      border-radius: calc(var(--radius) + 2px);
+      border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: clip;
     }
 
-    /* Carousel */
-    .carousel-head{
+    /* Testate sezioni */
+    .section-head{
       display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding: 12px clamp(12px,3.2vw,16px); border-bottom: var(--border);
-      background: linear-gradient(0deg, rgba(74,179,255,.05), transparent);
+      padding: 12px clamp(12px,3.2vw,16px);
+      border-bottom: var(--border);
+      background: transparent; /* no gradient */
     }
-    .carousel-head h2{ margin:0; font-size: clamp(1rem,3.4vw,1.1rem); color: var(--blue-700); }
-    .controls{ display:flex; gap:10px; }
-    .ctrl-btn{
-      min-height: 44px; min-width: 44px;
-      border:1px solid rgba(31,102,166,.25);
-      background: linear-gradient(180deg, #fff, #f4f9ff);
-      color: var(--blue-700);
-      border-radius: 999px; padding: 8px 12px; cursor: pointer; font-weight:700; font-size: 1rem;
-      box-shadow: 0 2px 8px rgba(31,102,166,.12);
-    }
-    .ctrl-btn:disabled{ opacity:.45; cursor:default }
-    .ctrl-btn:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
+    .section-head h2{ margin:0; font-size: clamp(1rem,3.4vw,1.1rem); color: var(--blue-700); }
 
+    /* Carousel */
     .carousel{ position: relative; overflow: hidden; max-height: 48vh; }
     @media (min-width: 700px){ .carousel{ max-height: 56vh; } }
     .track{ display:flex; flex-direction:column; will-change: transform; transition: transform .6s cubic-bezier(.22,.61,.36,1); }
 
-    .card{ padding: 14px clamp(12px,3.2vw,16px); border-bottom: var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.6)); }
+    .card{ padding: 14px clamp(12px,3.2vw,16px); border-bottom: var(--border); background: var(--card); }
     .card:last-child{ border-bottom: 0; }
     .card h3{ margin:0 0 6px; font-size: clamp(1rem,3.6vw,1.08rem) }
     .meta{ display:flex; align-items:center; gap:10px; margin: 2px 0 8px; color:var(--muted); font-size:.95rem; }
     .pill{
       display:inline-flex; align-items:center; gap:6px; padding: 6px 12px; border-radius:999px;
-      border:1px solid rgba(15,42,58,.08);
-      background: linear-gradient(180deg, #ffffff, #f6fbff);
+      border:1px solid #e6e6e6; background:#fff;
     }
     .pill b{ color: var(--blue-700); }
 
     .like-btn{
-      min-height:44px; border:1px solid rgba(255,122,26,.35);
-      background: linear-gradient(180deg, #fff6ef, #ffe8d6);
-      color:#7a3b00; border-radius: 12px; padding: 8px 12px; cursor:pointer; font-weight:700;
-      transition: transform .06s ease; touch-action: manipulation;
+      min-height:44px; border:1px solid #e6e6e6; /* neutro */
+      background:#fff4ea; color:#7a3b00; border-radius: 12px; padding: 8px 12px;
+      cursor:pointer; font-weight:700; transition: transform .06s ease; touch-action: manipulation;
     }
     .like-btn:hover{ transform: translateY(-1px) }
     .like-btn[disabled]{ opacity:.6; cursor:default; transform:none }
-    .like-btn:focus-visible{ outline: 3px solid rgba(255,122,26,.45); outline-offset: 2px; }
+    .like-btn:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
 
-    /* Clamp il corpo su mobile per evitare overflow verticale */
-    .body-clamp{
-      display:-webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden;
-    }
+    .body-clamp{ display:-webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
     @media (min-width:700px){ .body-clamp{ -webkit-line-clamp: 10; } }
+
+    /* Controlli */
+    .controls{ display:flex; gap:10px; }
+    .ctrl-btn{
+      min-height: 44px; min-width: 44px;
+      border:1px solid #e6e6e6; background:#ffffff; color:#222;
+      border-radius: 999px; padding: 8px 12px; cursor: pointer; font-weight:700; font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    .ctrl-btn:disabled{ opacity:.45; cursor:default }
+    .ctrl-btn:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
 
     /* Form */
     .form-wrap{ padding: clamp(12px,3.6vw,16px); }
@@ -112,15 +93,14 @@
     label{ font-weight:800; color: var(--blue-700); font-size: .98rem; }
     input, textarea{
       padding: 12px; border-radius: 12px; border: var(--border); background:#fff;
-      font-size:1rem; color:var(--text); box-shadow: 0 1px 0 rgba(15,42,58,.03) inset;
+      font-size:1rem; color:var(--text);
     }
     textarea{ min-height: 120px; resize: vertical; }
     input:focus-visible, textarea:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
 
     .actions{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
     .btn-primary{
-      min-height: 44px; border: 0;
-      background: linear-gradient(180deg, var(--orange-500), #ff6a00);
+      min-height: 44px; border: 0; background: linear-gradient(180deg, var(--orange-500), #ff6a00);
       color:#fff; font-weight:800; padding: 10px 16px; border-radius: 14px; cursor:pointer;
       box-shadow: 0 6px 16px rgba(255,122,26,.26); touch-action: manipulation;
     }
@@ -128,33 +108,21 @@
     .status{ font-size:.95rem }
     .ok{ color:#0a6 } .err{ color:#b00 }
 
-    /* Utility */
-    .hp{ position:absolute; left:-9999px; top:-9999px; }
-    .loading{ display:inline-flex; align-items:center; gap:8px; color:var(--muted); padding: 10px 14px; }
+    /* Loading */
+    .loading{ display:inline-flex; align-items:center; gap:8px; color:#666; padding: 10px 14px; }
     .dot{ width:6px; height:6px; border-radius:50%; background: currentColor; display:inline-block; animation: blink 1s infinite ease-in-out; }
     .dot:nth-child(2){ animation-delay:.2s } .dot:nth-child(3){ animation-delay:.4s }
     @keyframes blink{ 0%,80%,100%{opacity:.2} 40%{opacity:1} }
-    @media (prefers-reduced-motion: reduce){ .track{ transition:none } .like-btn{ transition:none } }
 
     /* Spazio basso sicuro su iOS */
     main{ padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="hero">
-    <div class="container hero-inner">
-      <div class="brand">
-        <h1>Suggerimenti della community</h1>
-        <p>Mare glaciale, idee nitide.</p>
-      </div>
-    </div>
-  </header>
-
   <main class="container">
-    <!-- Carosello -->
+    <!-- Carosello senza header -->
     <section class="panel" aria-label="Suggerimenti esistenti">
-      <div class="carousel-head">
+      <div class="section-head">
         <h2>Suggerimenti</h2>
         <div class="controls">
           <button id="prevBtn" type="button" class="ctrl-btn" aria-label="Indietro">◀</button>
@@ -327,7 +295,7 @@
       prevBtn.disabled = disabled; nextBtn.disabled = disabled;
     }
 
-    // Like (delegato)
+    // Like
     track.addEventListener('click', (e) => {
       const btnLike = e.target.closest('.like-btn');
       if (!btnLike) return;
@@ -346,7 +314,7 @@
     window.addEventListener('resize', () => calibrate());
     document.addEventListener('visibilitychange', () => { if (document.hidden) stopAuto(); else startAuto(); });
 
-    // Invio like via form nell'iframe
+    // Invio like via form nell'iframe (CORS-safe)
     function submitLike(row, btnEl) {
       if (!row || row < 2) return;
       if (btnEl) { btnEl.disabled = true; btnEl.textContent = '...'; }

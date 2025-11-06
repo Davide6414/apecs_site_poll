@@ -5,68 +5,73 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Invia suggerimento</title>
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:720px;margin:24px auto;padding:0 12px}
-    form{display:grid;gap:12px}
-    label{font-weight:600}
-    input,textarea,button{padding:8px;font-size:1rem}
-    textarea{min-height:96px;resize:vertical}
-    .row{display:grid;gap:6px}
-    .msg{margin-top:6px}
-    .ok{color:#066a3c}.err{color:#9b1c1c}
+    body { font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; }
+    form { display: grid; gap: 12px; }
+    label { font-weight: 600; }
+    input, textarea, button { padding: 8px; font-size: 1rem; }
+    textarea { resize: vertical; min-height: 100px; }
+    .row { display: grid; gap: 6px; }
+    .msg { margin-top: 10px; font-size: .95rem; }
+    .ok { color: #0a6; }
+    .err { color: #b00; }
   </style>
 </head>
 <body>
-  <h1>Inserisci dati</h1>
+  <h1>Inserisci suggerimento</h1>
 
-  <!-- Sostituisci l'URL con quello della tua Web App (deve terminare con /exec) -->
+  <!-- Sostituisci con l'URL /exec reale della tua Web App -->
   <form id="f" action="https://script.google.com/macros/s/REPLACE_WITH_EXEC_URL/exec" method="POST" target="sink" novalidate>
-    <div class="row">
-      <label for="ts">Timestamp (opzionale)</label>
-      <input type="datetime-local" id="ts" name="timestamp">
-    </div>
+    <input type="hidden" name="op" value="save">
+
     <div class="row">
       <label for="titolo">Titolo</label>
       <input type="text" id="titolo" name="titolo" required autocomplete="off">
     </div>
+
     <div class="row">
       <label for="suggerimento">Suggerimento</label>
       <textarea id="suggerimento" name="suggerimento" required></textarea>
     </div>
+
     <div class="row">
       <label for="likes">Numero di like</label>
       <input type="number" id="likes" name="likes" min="0" step="1" value="0" required>
+    </div>
+
+    <div class="row">
+      <label for="timestamp">Timestamp (opzionale)</label>
+      <input type="datetime-local" id="timestamp" name="timestamp">
     </div>
 
     <button type="submit" id="btn">Invia</button>
     <div id="msg" class="msg" aria-live="polite"></div>
   </form>
 
-  <!-- Iframe “sink” per evitare navigazione e bypass CORS -->
+  <!-- Iframe nascosto per ricevere la risposta e evitare CORS -->
   <iframe name="sink" style="display:none"></iframe>
 
   <script>
     const f = document.getElementById('f');
-    const btn = document.getElementById('btn');
     const msg = document.getElementById('msg');
-    const setMsg = (t,c='') => { msg.textContent=t; msg.className='msg '+c; };
+    const btn = document.getElementById('btn');
+
+    const setMsg = (t, cls='') => {
+      msg.textContent = t;
+      msg.className = 'msg ' + cls;
+    };
 
     f.addEventListener('submit', () => {
       setMsg('Invio in corso…');
       btn.disabled = true;
     });
 
-    // Conferma ottimistica quando l'iframe ha caricato la risposta testuale ("OK" o "ERRORE: ...")
-    document.querySelector('iframe[name="sink"]').addEventListener('load', async function() {
-      try {
-        // Non possiamo leggere direttamente l'iframe cross-origin; forniamo feedback ottimistico.
-        setMsg('Inserito', 'ok');
-        f.reset();
-        document.getElementById('likes').value = 0;
-      } catch (_) {
-        setMsg('Operazione completata', 'ok');
-      } finally {
-        btn.disabled = false;
-      }
+    // L'iframe carica sempre una risposta testuale ('OK' o 'ERRORE: ...')
+    document.querySelector('iframe[name="sink"]').addEventListener('load', () => {
+      // Non possiamo leggere la risposta per limiti CORS → feedback ottimistico
+      setMsg('Inserito correttamente', 'ok');
+      f.reset();
+      document.getElementById('likes').value = 0;
+      btn.disabled = false;
     });
   </script>
 </body>

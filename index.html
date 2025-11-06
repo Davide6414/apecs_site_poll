@@ -5,84 +5,207 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Suggerimenti</title>
   <style>
-    body { font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; }
-    form { display: grid; gap: 12px; }
-    label { font-weight: 600; }
-    input, textarea, button { padding: 8px; font-size: 1rem; }
-    textarea { resize: vertical; min-height: 100px; }
-    .row { display: grid; gap: 6px; }
-    .msg { margin-top: 10px; font-size: .95rem; }
-    .ok { color: #0a6; }
-    .err { color: #b00; }
-    .hp { position: absolute; left: -9999px; top: -9999px; }
+    :root{
+      --bg: #f6fbff;
+      --card: #ffffff;
+      --text: #0f2a3a;
+      --muted: #5b7686;
 
-    /* carousel */
-    .carousel-wrap { margin-bottom: 24px; position: relative; }
-    .carousel-title { margin: 0 0 8px; font-size: 1.2rem; }
-    .carousel { position: relative; overflow: hidden; border: 1px solid #e3e3e3; border-radius: 12px; background: #fff; }
-    .track { display: flex; flex-direction: column; will-change: transform; transition: transform .6s ease-in-out; }
-    .card { box-sizing: border-box; border-bottom: 1px solid #eee; padding: 14px 12px; }
-    .card:last-child { border-bottom: 0; }
-    .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
-    .meta { font-size: .9rem; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
-    .like-btn { border: 1px solid #ddd; background: #f7f7f7; border-radius: 8px; padding: 4px 8px; cursor: pointer; }
-    .like-btn[disabled] { opacity: .6; cursor: default; }
+      --blue-700:#0b3d6d;      /* blu profondo */
+      --blue-500:#1f66a6;      /* blu */
+      --azure-400:#4ab3ff;     /* azzurro */
+      --orange-500:#ff7a1a;    /* arancione CTA */
 
-    /* controls */
-    .controls { position: absolute; inset: 0; pointer-events: none; }
-    .ctrl-btn {
-      pointer-events: auto; position: absolute; top: 50%; transform: translateY(-50%);
-      border: 1px solid #ddd; background: rgba(255,255,255,.9); border-radius: 999px;
-      padding: 8px 12px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      --ring: rgba(74,179,255,.6);
+      --radius: 14px;
+      --gap: 14px;
+      --shadow: 0 8px 24px rgba(15,42,58,.08);
+      --border: 1px solid rgba(15,42,58,.08);
     }
-    .ctrl-prev { left: 8px; }
-    .ctrl-next { right: 8px; }
-    .ctrl-btn[disabled] { opacity: .5; cursor: default; }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b1520; --card:#0f1e2a; --text:#eef7ff; --muted:#9fb3c1;
+        --blue-700:#79b8ff; --blue-500:#4ab3ff; --azure-400:#7bd0ff; --orange-500:#ffa559;
+        --ring: rgba(123,208,255,.5); --border:1px solid rgba(255,255,255,.08);
+        --shadow: 0 10px 30px rgba(0,0,0,.35);
+      }
+    }
 
-    /* loading */
-    .loading { display: inline-flex; align-items: center; gap: 8px; color: #555; margin: 8px 0 16px; }
-    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; animation: blink 1s infinite ease-in-out; }
-    .dot:nth-child(2) { animation-delay: .2s; }
-    .dot:nth-child(3) { animation-delay: .4s; }
-    @keyframes blink { 0%,80%,100%{ opacity:.2 } 40%{ opacity:1 } }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text); background:
+        radial-gradient(1200px 600px at 80% -20%, rgba(74,179,255,.18), transparent 60%),
+        radial-gradient(900px 500px at -10% 10%, rgba(31,102,166,.14), transparent 60%),
+        linear-gradient(180deg, #ffffff00 0%, rgba(31,102,166,.06) 100%),
+        var(--bg);
+    }
+
+    /* Header */
+    .hero{
+      padding: 28px 0 18px;
+      background:
+        radial-gradient(1200px 500px at 20% -40%, rgba(255,122,26,.18), transparent 70%),
+        linear-gradient(135deg, rgba(31,102,166,.20), rgba(11,61,109,.28));
+      color:#fff;
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,.12);
+    }
+    .container{ max-width: 900px; margin: 0 auto; padding: 0 16px; }
+    .hero-inner{ display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+    .brand{
+      display:grid; gap:6px;
+    }
+    .brand h1{ margin:0; font-size: clamp(1.3rem, 2.5vw, 1.8rem); letter-spacing:.2px; }
+    .brand p{ margin:0; opacity:.9; }
+
+    /* Panel */
+    .panel{
+      margin-top: 18px;
+      background: var(--card);
+      border: var(--border);
+      border-radius: calc(var(--radius) + 2px);
+      box-shadow: var(--shadow);
+      overflow: clip;
+    }
+
+    /* Carousel */
+    .carousel-wrap{ position: relative; }
+    .carousel-head{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 14px 14px 10px; border-bottom: var(--border); background: linear-gradient(0deg, rgba(74,179,255,.05), transparent);
+    }
+    .carousel-head h2{ margin:0; font-size:1.05rem; color: var(--blue-700); }
+    .controls{ display:flex; gap:8px; }
+    .ctrl-btn{
+      border:1px solid rgba(31,102,166,.25);
+      background: linear-gradient(180deg, #fff, #f4f9ff);
+      color: var(--blue-700);
+      border-radius: 999px; padding: 6px 10px; cursor: pointer; font-weight:600;
+      box-shadow: 0 2px 8px rgba(31,102,166,.12);
+    }
+    .ctrl-btn:disabled{ opacity:.45; cursor:default }
+    .ctrl-btn:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
+
+    .carousel{ position: relative; overflow: hidden; }
+    .track{ display:flex; flex-direction:column; will-change: transform; transition: transform .6s cubic-bezier(.22,.61,.36,1); }
+
+    .card{
+      padding: 16px 14px; border-bottom: var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.5));
+    }
+    .card:last-child{ border-bottom: 0; }
+    .card h3{ margin:0 0 8px; font-size:1.05rem }
+    .meta{
+      display:flex; align-items:center; gap:10px; margin: 2px 0 8px; color:var(--muted); font-size:.95rem;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:6px; padding: 4px 10px; border-radius:999px;
+      border:1px solid rgba(15,42,58,.08);
+      background: linear-gradient(180deg, #ffffff, #f6fbff);
+    }
+    .pill b{ color: var(--blue-700); }
+    .like-btn{
+      border:1px solid rgba(255,122,26,.35);
+      background: linear-gradient(180deg, #fff6ef, #ffe8d6);
+      color:#7a3b00; border-radius: 10px; padding: 6px 10px; cursor:pointer; font-weight:600;
+      transition: transform .06s ease;
+    }
+    .like-btn:hover{ transform: translateY(-1px) }
+    .like-btn[disabled]{ opacity:.6; cursor:default; transform:none }
+    .like-btn:focus-visible{ outline: 3px solid rgba(255,122,26,.45); outline-offset: 2px; }
+
+    /* Form */
+    .form-wrap{ padding: 16px; }
+    form{ display:grid; gap: 12px; }
+    .row{ display:grid; gap:6px; }
+    label{ font-weight:700; color: var(--blue-700); }
+    input, textarea{
+      padding: 10px 12px; border-radius: 10px; border: var(--border); background:#fff;
+      font-size:1rem; color:var(--text);
+      box-shadow: 0 1px 0 rgba(15,42,58,.03) inset;
+    }
+    textarea{ min-height: 120px; resize: vertical; }
+    input:focus-visible, textarea:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
+
+    .actions{ display:flex; gap:10px; align-items:center }
+    .btn-primary{
+      border: 0; background: linear-gradient(180deg, var(--orange-500), #ff6a00);
+      color:#fff; font-weight:700; padding: 10px 14px; border-radius: 12px; cursor:pointer;
+      box-shadow: 0 6px 16px rgba(255,122,26,.26);
+    }
+    .btn-primary:disabled{ opacity:.6; cursor: default }
+    .status{ font-size:.95rem }
+    .ok{ color:#0a6 } .err{ color:#b00 }
+
+    /* Utility */
+    .hp{ position:absolute; left:-9999px; top:-9999px; }
+    .loading{ display:inline-flex; align-items:center; gap:8px; color:var(--muted) }
+    .dot{ width:6px; height:6px; border-radius:50%; background: currentColor; display:inline-block; animation: blink 1s infinite ease-in-out; }
+    .dot:nth-child(2){ animation-delay:.2s } .dot:nth-child(3){ animation-delay:.4s }
+    @keyframes blink{ 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+    @media (prefers-reduced-motion: reduce){
+      .track{ transition:none } .like-btn{ transition:none }
+    }
   </style>
 </head>
 <body>
-  <div class="carousel-wrap">
-    <h2 class="carousel-title">Suggerimenti</h2>
-    <div id="cardsLoading" class="loading" style="display:none" aria-live="polite">
-      <span>Caricamento</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-    </div>
-    <div id="carousel" class="carousel" aria-live="polite">
-      <div id="track" class="track"></div>
-      <div class="controls" aria-hidden="false">
-        <button id="prevBtn" type="button" class="ctrl-btn ctrl-prev" aria-label="Indietro">◀</button>
-        <button id="nextBtn" type="button" class="ctrl-btn ctrl-next" aria-label="Avanti">▶</button>
+  <!-- Header -->
+  <header class="hero">
+    <div class="container hero-inner">
+      <div class="brand">
+        <h1>Suggerimenti della community</h1>
+        <p>Mare glaciale, idee nitide. Blu, azzurro, arancione per le azioni.</p>
       </div>
     </div>
-  </div>
+  </header>
 
-  <h1>Inserisci suggerimento</h1>
-  <form id="f"
-        action="https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec"
-        method="POST" target="sink" novalidate autocomplete="off">
-    <input type="hidden" name="op" value="save">
-    <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
+  <main class="container">
+    <!-- Panel con carosello -->
+    <section class="panel carousel-wrap" aria-label="Suggerimenti esistenti">
+      <div class="carousel-head">
+        <h2>Suggerimenti</h2>
+        <div class="controls">
+          <button id="prevBtn" type="button" class="ctrl-btn" aria-label="Indietro">◀</button>
+          <button id="nextBtn" type="button" class="ctrl-btn" aria-label="Avanti">▶</button>
+        </div>
+      </div>
+      <div id="cardsLoading" class="loading" style="display:none" aria-live="polite">
+        <span>Caricamento</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <div id="carousel" class="carousel" aria-live="polite">
+        <div id="track" class="track"></div>
+      </div>
+    </section>
 
-    <div class="row">
-      <label for="titolo">Titolo</label>
-      <input type="text" id="titolo" name="titolo" required>
-    </div>
+    <!-- Panel con form -->
+    <section class="panel form-wrap" aria-label="Inserisci nuovo suggerimento">
+      <h2 style="margin:0 0 8px; color:var(--blue-700)">Inserisci suggerimento</h2>
+      <form id="f"
+            action="https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec"
+            method="POST" target="sink" novalidate autocomplete="off">
+        <input type="hidden" name="op" value="save">
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
 
-    <div class="row">
-      <label for="suggerimento">Suggerimento</label>
-      <textarea id="suggerimento" name="suggerimento" required></textarea>
-    </div>
+        <div class="row">
+          <label for="titolo">Titolo</label>
+          <input type="text" id="titolo" name="titolo" required>
+        </div>
 
-    <button type="submit" id="btn">Invia</button>
-    <div id="msg" class="msg" aria-live="polite"></div>
-  </form>
+        <div class="row">
+          <label for="suggerimento">Suggerimento</label>
+          <textarea id="suggerimento" name="suggerimento" required></textarea>
+        </div>
 
+        <div class="actions">
+          <button type="submit" id="btn" class="btn-primary">Invia suggerimento</button>
+          <div id="msg" class="status" aria-live="polite"></div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Iframe nascosto per evitare CORS sul POST -->
   <iframe name="sink" style="display:none"></iframe>
 
   <script>
@@ -106,7 +229,7 @@
     let timer = null;
     let resumeTimer = null;
 
-    const setMsg = (t, cls='') => { msg.textContent = t; msg.className = 'msg ' + cls; };
+    const setMsg = (t, cls='') => { msg.textContent = t; msg.className = 'status ' + cls; };
 
     const escapeHtml = s => String(s ?? '')
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -145,8 +268,7 @@
     function renderCards(rows) {
       if (!rows.length) {
         track.innerHTML = '<div class="card"><p>Nessun suggerimento presente.</p></div>';
-        calibrate();
-        return;
+        calibrate(); updateControlsState(); return;
       }
       const norm = rows.map((o) => ({
         _row: o._row,
@@ -161,7 +283,7 @@
         <article class="card">
           <h3>${escapeHtml(o.titolo)}</h3>
           <div class="meta">
-            <span>👍 <strong>${o.likes}</strong></span>
+            <span class="pill">👍 <b>${o.likes}</b></span>
             <button type="button" class="like-btn" data-row="${o._row}">Metti like</button>
             <span>· ${fmtTs(o.ts)}</span>
           </div>
@@ -206,9 +328,7 @@
     }
     function pauseAndResume() {
       stopAuto();
-      if (slides.length > 1) {
-        resumeTimer = setTimeout(() => startAuto(), 15000);
-      }
+      if (slides.length > 1) resumeTimer = setTimeout(() => startAuto(), 15000);
     }
 
     function updateControlsState() {
@@ -217,7 +337,7 @@
       nextBtn.disabled = disabled;
     }
 
-    // Like delegato
+    // Like
     track.addEventListener('click', (e) => {
       const btnLike = e.target.closest('.like-btn');
       if (!btnLike) return;
@@ -226,17 +346,15 @@
       pauseAndResume();
     });
 
-    // Controlli manuali
+    // Controlli
     prevBtn.addEventListener('click', () => { prev(); pauseAndResume(); });
     nextBtn.addEventListener('click', () => { next(); pauseAndResume(); });
-
-    // Tastiera ← →
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') { prev(); pauseAndResume(); }
       if (e.key === 'ArrowRight') { next(); pauseAndResume(); }
     });
 
-    // Invio like via form nascosto nell'iframe
+    // Invio like via form nell'iframe
     function submitLike(row, btnEl) {
       if (!row || row < 2) return;
       if (btnEl) { btnEl.disabled = true; btnEl.textContent = '...'; }
@@ -259,6 +377,7 @@
       setTimeout(() => form.remove(), 0);
     }
 
+    // Submit form
     f.addEventListener('submit', (e) => {
       if (f.website && f.website.value) { e.preventDefault(); setMsg('Bloccato', 'err'); return; }
       if (!f.titolo.value.trim() || !f.suggerimento.value.trim()) { e.preventDefault(); setMsg('Compila i campi obbligatori', 'err'); return; }
@@ -268,6 +387,7 @@
       pauseAndResume();
     });
 
+    // Iframe response
     sink.addEventListener('load', () => {
       if (lastOp === 'save') {
         setMsg('Inserito correttamente', 'ok');

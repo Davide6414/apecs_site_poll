@@ -6,140 +6,501 @@
   <title>Suggerimenti</title>
   <style>
     :root{
-      --bg:#ffffff; --card:#ffffff; --text:#0f2a3a; --muted:#5b7686;
-      --blue-700:#0b3d6d; --orange-500:#ff7a1a;
-      --ring: rgba(0,0,0,.2);
-      --radius:14px; --gap:14px;
-      --shadow: 0 8px 24px rgba(0,0,0,.06);
-      --border: 1px solid #e6e6e6; /* neutro, niente azzurro */
+      --bg:#ffffff;
+      --card:#ffffff;
+      --text:#0a4d8f;
+      --muted:#5c9fd6;
+      --primary:#1e88e5;
+      --primary-hover:#1565c0;
+      --secondary:#e3f2fd;
+      --border:#90caf9;
+      --shadow: 0 1px 3px rgba(30,136,229,.15), 0 1px 2px rgba(30,136,229,.1);
+      --shadow-lg: 0 10px 15px -3px rgba(30,136,229,.2), 0 4px 6px -2px rgba(30,136,229,.15);
+      --radius:16px;
+      --orange:#ff9800;
+      --orange-light:#fff3e0;
     }
+    
     @media (prefers-color-scheme: dark){
       :root{
-        --bg:#0e0e10; --card:#141418; --text:#eef7ff; --muted:#a9b4bd;
-        --blue-700:#9fd0ff; --orange-500:#ffa559;
-        --ring: rgba(255,255,255,.3);
-        --border:1px solid #2a2a2f; --shadow: 0 10px 30px rgba(0,0,0,.45);
+        --bg:#0d1b2a;
+        --card:#1b2838;
+        --text:#e3f2fd;
+        --muted:#90caf9;
+        --primary:#42a5f5;
+        --primary-hover:#1e88e5;
+        --secondary:#1b3a52;
+        --border:#2563a0;
+        --shadow: 0 4px 6px -1px rgba(0,0,0,.5), 0 2px 4px -1px rgba(0,0,0,.3);
+        --shadow-lg: 0 20px 25px -5px rgba(0,0,0,.6), 0 10px 10px -5px rgba(0,0,0,.4);
       }
     }
-    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent}
-    html,body{height:100%}
+    
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
+    }
+    
+    html,body{
+      height:100%;
+      margin:0;
+      padding:0;
+    }
+    
     body{
-      margin:0; font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text); background: var(--bg); line-height:1.4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color:var(--text);
+      background:var(--bg);
+      line-height:1.6;
+      overflow-x:hidden;
     }
-    .container{ max-width:920px; margin:0 auto; padding: 12px clamp(12px,4vw,20px); }
 
-    /* Pannelli puliti, senza gradienti o bordi azzurri */
+    /* Snowflakes Canvas */
+    #snowCanvas{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      z-index:1;
+    }
+
+    /* Loading Overlay */
+    #loadingOverlay{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,.6);
+      backdrop-filter:blur(8px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .3s ease;
+    }
+    
+    #loadingOverlay.show{
+      opacity:1;
+      pointer-events:all;
+    }
+    
+    .loader{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:16px;
+    }
+    
+    .spinner{
+      width:48px;
+      height:48px;
+      border:4px solid rgba(255,255,255,.2);
+      border-top-color:#fff;
+      border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+    
+    @keyframes spin{
+      to{transform:rotate(360deg)}
+    }
+    
+    .loader-text{
+      color:#fff;
+      font-size:16px;
+      font-weight:500;
+    }
+
+    /* Main Container */
+    .container{
+      position:relative;
+      z-index:2;
+      max-width:900px;
+      margin:0 auto;
+      padding:60px 16px 80px;
+    }
+    
+    @media (min-width:768px){
+      .container{
+        padding:80px 32px 100px;
+      }
+    }
+
+    /* Panel Cards */
     .panel{
-      margin: clamp(12px,3.5vw,18px) 0;
-      background: var(--card);
-      border: var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: clip;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      margin-bottom:32px;
+      overflow:hidden;
+      transition:box-shadow .3s ease;
+    }
+    
+    .panel:hover{
+      box-shadow:var(--shadow-lg);
     }
 
-    /* Testate sezioni */
+    /* Section Header */
     .section-head{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding: 12px clamp(12px,3.2vw,16px);
-      border-bottom: var(--border);
-      background: transparent; /* no gradient */
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:20px 24px;
+      border-bottom:1px solid var(--border);
     }
-    .section-head h2{ margin:0; font-size: clamp(1rem,3.4vw,1.1rem); color: var(--blue-700); }
+    
+    .section-head h2{
+      margin:0;
+      font-size:24px;
+      font-weight:700;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    /* Controls */
+    .controls{
+      display:flex;
+      gap:8px;
+    }
+    
+    .ctrl-btn{
+      min-width:44px;
+      min-height:44px;
+      border:1px solid var(--border);
+      background:var(--card);
+      color:var(--text);
+      border-radius:12px;
+      cursor:pointer;
+      font-size:18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition:all .2s ease;
+      box-shadow:var(--shadow);
+    }
+    
+    .ctrl-btn:hover:not(:disabled){
+      background:var(--secondary);
+      transform:translateY(-2px);
+      box-shadow:var(--shadow-lg);
+    }
+    
+    .ctrl-btn:active:not(:disabled){
+      transform:translateY(0);
+    }
+    
+    .ctrl-btn:disabled{
+      opacity:.3;
+      cursor:not-allowed;
+    }
+    
+    .ctrl-btn:focus-visible{
+      outline:3px solid var(--primary);
+      outline-offset:2px;
+    }
 
     /* Carousel */
-    .carousel{ position: relative; overflow: hidden; max-height: 48vh; }
-    @media (min-width: 700px){ .carousel{ max-height: 56vh; } }
-    .track{ display:flex; flex-direction:column; will-change: transform; transition: transform .6s cubic-bezier(.22,.61,.36,1); }
+    .carousel{
+      position:relative;
+      overflow:hidden;
+      min-height:300px;
+    }
+    
+    .track{
+      display:flex;
+      flex-direction:column;
+      transition:transform .5s cubic-bezier(.4,0,.2,1);
+    }
 
-    .card{ padding: 14px clamp(12px,3.2vw,16px); border-bottom: var(--border); background: var(--card); }
-    .card:last-child{ border-bottom: 0; }
-    .card h3{ margin:0 0 6px; font-size: clamp(1rem,3.6vw,1.08rem) }
-    .meta{ display:flex; align-items:center; gap:10px; margin: 2px 0 8px; color:var(--muted); font-size:.95rem; }
+    /* Card */
+    .card{
+      padding:24px;
+      border-bottom:1px solid var(--border);
+      min-height:200px;
+    }
+    
+    .card:last-child{
+      border-bottom:0;
+    }
+    
+    .card h3{
+      margin:0 0 12px;
+      font-size:22px;
+      font-weight:700;
+      color:var(--text);
+    }
+    
+    .meta{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+      flex-wrap:wrap;
+    }
+    
     .pill{
-      display:inline-flex; align-items:center; gap:6px; padding: 6px 12px; border-radius:999px;
-      border:1px solid #e6e6e6; background:#fff;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 14px;
+      border-radius:999px;
+      background:var(--secondary);
+      border:1px solid var(--border);
+      font-size:15px;
+      font-weight:600;
+      color:var(--primary);
     }
-    .pill b{ color: var(--blue-700); }
-
+    
     .like-btn{
-      min-height:44px; border:1px solid #e6e6e6; /* neutro */
-      background:#fff4ea; color:#7a3b00; border-radius: 12px; padding: 8px 12px;
-      cursor:pointer; font-weight:700; transition: transform .06s ease; touch-action: manipulation;
+      min-height:44px;
+      padding:10px 20px;
+      border:0;
+      background:linear-gradient(135deg, var(--orange), #f57c00);
+      color:#fff;
+      border-radius:12px;
+      font-weight:700;
+      font-size:15px;
+      cursor:pointer;
+      transition:all .2s ease;
+      box-shadow:0 4px 12px rgba(255,152,0,.35);
     }
-    .like-btn:hover{ transform: translateY(-1px) }
-    .like-btn[disabled]{ opacity:.6; cursor:default; transform:none }
-    .like-btn:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
-
-    .body-clamp{ display:-webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
-    @media (min-width:700px){ .body-clamp{ -webkit-line-clamp: 10; } }
-
-    /* Controlli */
-    .controls{ display:flex; gap:10px; }
-    .ctrl-btn{
-      min-height: 44px; min-width: 44px;
-      border:1px solid #e6e6e6; background:#ffffff; color:#222;
-      border-radius: 999px; padding: 8px 12px; cursor: pointer; font-weight:700; font-size: 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    
+    .like-btn:hover:not(:disabled){
+      transform:translateY(-2px);
+      box-shadow:0 6px 16px rgba(255,152,0,.45);
     }
-    .ctrl-btn:disabled{ opacity:.45; cursor:default }
-    .ctrl-btn:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
+    
+    .like-btn:active:not(:disabled){
+      transform:translateY(0);
+    }
+    
+    .like-btn:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+      transform:none;
+    }
+    
+    .like-btn:focus-visible{
+      outline:3px solid var(--orange);
+      outline-offset:2px;
+    }
+    
+    .timestamp{
+      color:var(--muted);
+      font-size:14px;
+    }
+    
+    .body-clamp{
+      color:var(--text);
+      font-size:16px;
+      line-height:1.7;
+      display:-webkit-box;
+      -webkit-box-orient:vertical;
+      -webkit-line-clamp:6;
+      overflow:hidden;
+    }
+    
+    @media (min-width:768px){
+      .body-clamp{
+        -webkit-line-clamp:8;
+      }
+    }
 
-    /* Form */
-    .form-wrap{ padding: clamp(12px,3.6vw,16px); }
-    form{ display:grid; gap: 12px; }
-    .row{ display:grid; gap:6px; }
-    label{ font-weight:800; color: var(--blue-700); font-size: .98rem; }
+    /* Form Section */
+    .form-wrap{
+      padding:28px 24px;
+    }
+    
+    .form-wrap h2{
+      margin:0 0 24px;
+      font-size:24px;
+      font-weight:700;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    
+    form{
+      display:grid;
+      gap:20px;
+    }
+    
+    .row{
+      display:grid;
+      gap:8px;
+    }
+    
+    label{
+      font-weight:600;
+      color:var(--text);
+      font-size:15px;
+    }
+    
     input, textarea{
-      padding: 12px; border-radius: 12px; border: var(--border); background:#fff;
-      font-size:1rem; color:var(--text);
+      padding:14px 16px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--card);
+      color:var(--text);
+      font-size:16px;
+      font-family:inherit;
+      transition:all .2s ease;
     }
-    textarea{ min-height: 120px; resize: vertical; }
-    input:focus-visible, textarea:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
-
-    .actions{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+    
+    input:focus, textarea:focus{
+      outline:0;
+      border-color:var(--primary);
+      box-shadow:0 0 0 3px rgba(37,99,235,.1);
+    }
+    
+    textarea{
+      min-height:140px;
+      resize:vertical;
+    }
+    
+    .hp{
+      position:absolute;
+      left:-9999px;
+    }
+    
+    .actions{
+      display:flex;
+      gap:16px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    
     .btn-primary{
-      min-height: 44px; border: 0; background: linear-gradient(180deg, var(--orange-500), #ff6a00);
-      color:#fff; font-weight:800; padding: 10px 16px; border-radius: 14px; cursor:pointer;
-      box-shadow: 0 6px 16px rgba(255,122,26,.26); touch-action: manipulation;
+      min-height:48px;
+      padding:12px 32px;
+      border:0;
+      background:linear-gradient(135deg, var(--primary), var(--primary-hover));
+      color:#fff;
+      font-weight:700;
+      font-size:16px;
+      border-radius:12px;
+      cursor:pointer;
+      transition:all .2s ease;
+      box-shadow:0 4px 12px rgba(30,136,229,.35);
     }
-    .btn-primary:disabled{ opacity:.6; cursor: default }
-    .status{ font-size:.95rem }
-    .ok{ color:#0a6 } .err{ color:#b00 }
+    
+    .btn-primary:hover:not(:disabled){
+      transform:translateY(-2px);
+      box-shadow:0 6px 16px rgba(30,136,229,.45);
+    }
+    
+    .btn-primary:active:not(:disabled){
+      transform:translateY(0);
+    }
+    
+    .btn-primary:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+      transform:none;
+    }
+    
+    .btn-primary:focus-visible{
+      outline:3px solid var(--primary);
+      outline-offset:2px;
+    }
+    
+    .status{
+      font-size:15px;
+      font-weight:500;
+    }
+    
+    .ok{
+      color:#10b981;
+    }
+    
+    .err{
+      color:#ef4444;
+    }
 
-    /* Loading */
-    .loading{ display:inline-flex; align-items:center; gap:8px; color:#666; padding: 10px 14px; }
-    .dot{ width:6px; height:6px; border-radius:50%; background: currentColor; display:inline-block; animation: blink 1s infinite ease-in-out; }
-    .dot:nth-child(2){ animation-delay:.2s } .dot:nth-child(3){ animation-delay:.4s }
-    @keyframes blink{ 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+    /* Empty State */
+    .empty-state{
+      text-align:center;
+      padding:48px 24px;
+      color:var(--muted);
+    }
+    
+    .empty-state-icon{
+      font-size:48px;
+      margin-bottom:16px;
+    }
 
-    /* Spazio basso sicuro su iOS */
-    main{ padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+    /* Inline Loading */
+    .loading{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:24px;
+      color:var(--muted);
+    }
+    
+    .dot{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:currentColor;
+      animation:blink 1.4s infinite ease-in-out;
+    }
+    
+    .dot:nth-child(2){animation-delay:.2s}
+    .dot:nth-child(3){animation-delay:.4s}
+    
+    @keyframes blink{
+      0%,80%,100%{opacity:.2}
+      40%{opacity:1}
+    }
   </style>
 </head>
 <body>
+  <!-- Snowflakes Canvas -->
+  <canvas id="snowCanvas"></canvas>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay">
+    <div class="loader">
+      <div class="spinner"></div>
+      <div class="loader-text">Caricamento...</div>
+    </div>
+  </div>
+
   <main class="container">
-    <!-- Carosello senza header -->
+    <!-- Carousel Section -->
     <section class="panel" aria-label="Suggerimenti esistenti">
       <div class="section-head">
-        <h2>Suggerimenti</h2>
+        <h2>💡 Suggerimenti</h2>
         <div class="controls">
-          <button id="prevBtn" type="button" class="ctrl-btn" aria-label="Indietro">◀</button>
-          <button id="nextBtn" type="button" class="ctrl-btn" aria-label="Avanti">▶</button>
+          <button id="prevBtn" type="button" class="ctrl-btn" aria-label="Precedente">◀</button>
+          <button id="nextBtn" type="button" class="ctrl-btn" aria-label="Successivo">▶</button>
         </div>
       </div>
       <div id="cardsLoading" class="loading" style="display:none" aria-live="polite">
-        <span>Caricamento</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span>Caricamento</span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
       </div>
       <div id="carousel" class="carousel" aria-live="polite">
         <div id="track" class="track"></div>
       </div>
     </section>
 
-    <!-- Form -->
+    <!-- Form Section -->
     <section class="panel form-wrap" aria-label="Inserisci nuovo suggerimento">
-      <h2 style="margin:0 0 8px; color:var(--blue-700); font-size: clamp(1rem,3.6vw,1.2rem)">Inserisci suggerimento</h2>
+      <h2>✍️ Inserisci suggerimento</h2>
       <form id="f"
             action="https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec"
             method="POST" target="sink" novalidate autocomplete="off">
@@ -148,12 +509,12 @@
 
         <div class="row">
           <label for="titolo">Titolo</label>
-          <input type="text" id="titolo" name="titolo" required inputmode="text" autocomplete="off">
+          <input type="text" id="titolo" name="titolo" required placeholder="Inserisci un titolo...">
         </div>
 
         <div class="row">
           <label for="suggerimento">Suggerimento</label>
-          <textarea id="suggerimento" name="suggerimento" required></textarea>
+          <textarea id="suggerimento" name="suggerimento" required placeholder="Descrivi il tuo suggerimento..."></textarea>
         </div>
 
         <div class="actions">
@@ -164,7 +525,6 @@
     </section>
   </main>
 
-  <!-- Iframe nascosto per evitare CORS sul POST -->
   <iframe name="sink" style="display:none"></iframe>
 
   <script>
@@ -174,6 +534,7 @@
     const msg = document.getElementById('msg');
     const btn = document.getElementById('btn');
     const sink = document.querySelector('iframe[name="sink"]');
+    const loadingOverlay = document.getElementById('loadingOverlay');
 
     const carousel = document.getElementById('carousel');
     const track = document.getElementById('track');
@@ -181,14 +542,96 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
 
-    let lastOp = null; // 'save' | 'like'
+    let lastOp = null;
     let slides = [];
     let slideH = 0;
     let cur = 0;
     let timer = null;
     let resumeTimer = null;
 
-    const setMsg = (t, cls='') => { msg.textContent = t; msg.className = 'status ' + cls; };
+    // Snowflakes Animation
+    const canvas = document.getElementById('snowCanvas');
+    const ctx = canvas.getContext('2d');
+    let snowflakes = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    class Snowflake {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height - canvas.height;
+        this.radius = Math.random() * 3 + 1;
+        this.speed = Math.random() * 1 + 0.5;
+        this.wind = Math.random() * 0.5 - 0.25;
+        this.opacity = Math.random() * 0.6 + 0.3;
+      }
+
+      update() {
+        this.y += this.speed;
+        this.x += this.wind;
+
+        if (this.y > canvas.height) {
+          this.y = -10;
+          this.x = Math.random() * canvas.width;
+        }
+
+        if (this.x > canvas.width) {
+          this.x = 0;
+        } else if (this.x < 0) {
+          this.x = canvas.width;
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.fill();
+      }
+    }
+
+    function initSnowflakes() {
+      snowflakes = [];
+      const count = Math.min(Math.floor((canvas.width * canvas.height) / 8000), 100);
+      for (let i = 0; i < count; i++) {
+        snowflakes.push(new Snowflake());
+      }
+    }
+
+    function animateSnow() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      snowflakes.forEach(flake => {
+        flake.update();
+        flake.draw();
+      });
+      requestAnimationFrame(animateSnow);
+    }
+
+    resizeCanvas();
+    initSnowflakes();
+    animateSnow();
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      initSnowflakes();
+    });
+
+    // Loading Overlay
+    function showLoading() {
+      loadingOverlay.classList.add('show');
+    }
+
+    function hideLoading() {
+      loadingOverlay.classList.remove('show');
+    }
+
+    const setMsg = (t, cls='') => { 
+      msg.textContent = t; 
+      msg.className = 'status ' + cls; 
+    };
 
     const escapeHtml = s => String(s ?? '')
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -206,7 +649,7 @@
     };
 
     function setCardsLoading(on) {
-      cardsLoading.style.display = on ? 'inline-flex' : 'none';
+      cardsLoading.style.display = on ? 'flex' : 'none';
       if (on) { track.innerHTML = ''; stopAuto(); }
     }
 
@@ -218,7 +661,7 @@
         if (!j.ok) throw new Error(j.message || 'Errore lettura');
         renderCards(j.rows || []);
       } catch (err) {
-        track.innerHTML = `<div class="card"><div class="meta">Errore</div><p>${escapeHtml(err.message)}</p></div>`;
+        track.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Errore: ${escapeHtml(err.message)}</p></div></div>`;
       } finally {
         setCardsLoading(false);
       }
@@ -226,9 +669,12 @@
 
     function renderCards(rows) {
       if (!rows.length) {
-        track.innerHTML = '<div class="card"><p>Nessun suggerimento presente.</p></div>';
-        calibrate(); updateControlsState(); return;
+        track.innerHTML = '<div class="card"><div class="empty-state"><div class="empty-state-icon">📝</div><p>Nessun suggerimento presente.</p><p>Sii il primo a inserirne uno!</p></div></div>';
+        calibrate(); 
+        updateControlsState(); 
+        return;
       }
+      
       const norm = rows.map((o) => ({
         _row: o._row,
         titolo: o.titolo,
@@ -236,15 +682,16 @@
         likes: Number(o.numero_like ?? o.likes ?? 0),
         ts: o.timestamp
       }));
+      
       norm.sort((a,b) => (b.likes - a.likes) || (new Date(b.ts) - new Date(a.ts)));
 
       track.innerHTML = norm.map(o => `
         <article class="card">
           <h3>${escapeHtml(o.titolo)}</h3>
           <div class="meta">
-            <span class="pill">👍 <b>${o.likes}</b></span>
+            <span class="pill">👍 ${o.likes}</span>
             <button type="button" class="like-btn" data-row="${o._row}">Metti like</button>
-            <span>· ${fmtTs(o.ts)}</span>
+            <span class="timestamp">${fmtTs(o.ts)}</span>
           </div>
           <p class="body-clamp">${escapeHtml(o.suggerimento)}</p>
         </article>`).join('');
@@ -256,10 +703,21 @@
 
     function calibrate() {
       slides = Array.from(track.children);
-      if (slides.length === 0) { slideH = 0; carousel.style.height = 'auto'; return; }
+      if (slides.length === 0) { 
+        slideH = 0; 
+        carousel.style.height = 'auto'; 
+        return; 
+      }
+      
       let maxH = 0;
-      slides.forEach(s => { s.style.height = 'auto'; maxH = Math.max(maxH, s.offsetHeight); });
-      slides.forEach(s => { s.style.height = maxH + 'px'; });
+      slides.forEach(s => { 
+        s.style.height = 'auto'; 
+        maxH = Math.max(maxH, s.offsetHeight); 
+      });
+      slides.forEach(s => { 
+        s.style.height = maxH + 'px'; 
+      });
+      
       slideH = Math.min(maxH, carousel.clientHeight || maxH);
       carousel.style.height = slideH + 'px';
       cur = 0;
@@ -279,12 +737,14 @@
     function startAuto() {
       stopAuto();
       if (slides.length <= 1) return;
-      timer = setInterval(next, 10000); // 10s
+      timer = setInterval(next, 10000);
     }
+    
     function stopAuto() {
       if (timer) { clearInterval(timer); timer = null; }
       if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
     }
+    
     function pauseAndResume() {
       stopAuto();
       if (slides.length > 1) resumeTimer = setTimeout(() => startAuto(), 15000);
@@ -292,10 +752,10 @@
 
     function updateControlsState() {
       const disabled = slides.length <= 1;
-      prevBtn.disabled = disabled; nextBtn.disabled = disabled;
+      prevBtn.disabled = disabled; 
+      nextBtn.disabled = disabled;
     }
 
-    // Like
     track.addEventListener('click', (e) => {
       const btnLike = e.target.closest('.like-btn');
       if (!btnLike) return;
@@ -304,42 +764,79 @@
       pauseAndResume();
     });
 
-    // Controlli
     prevBtn.addEventListener('click', () => { prev(); pauseAndResume(); });
     nextBtn.addEventListener('click', () => { next(); pauseAndResume(); });
+    
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') { prev(); pauseAndResume(); }
       if (e.key === 'ArrowRight') { next(); pauseAndResume(); }
     });
+    
     window.addEventListener('resize', () => calibrate());
-    document.addEventListener('visibilitychange', () => { if (document.hidden) stopAuto(); else startAuto(); });
+    
+    document.addEventListener('visibilitychange', () => { 
+      if (document.hidden) stopAuto(); 
+      else startAuto(); 
+    });
 
-    // Invio like via form nell'iframe (CORS-safe)
     function submitLike(row, btnEl) {
       if (!row || row < 2) return;
-      if (btnEl) { btnEl.disabled = true; btnEl.textContent = '...'; }
+      if (btnEl) { 
+        btnEl.disabled = true; 
+        btnEl.textContent = '⏳ ...'; 
+      }
       lastOp = 'like';
       const form = document.createElement('form');
-      form.action = API; form.method = 'POST'; form.target = 'sink'; form.style.display = 'none';
-      const op = document.createElement('input'); op.name = 'op'; op.value = 'like'; form.appendChild(op);
-      const r = document.createElement('input'); r.name = 'row'; r.value = String(row); form.appendChild(r);
-      document.body.appendChild(form); form.submit(); setTimeout(() => form.remove(), 0);
+      form.action = API; 
+      form.method = 'POST'; 
+      form.target = 'sink'; 
+      form.style.display = 'none';
+      const op = document.createElement('input'); 
+      op.name = 'op'; 
+      op.value = 'like'; 
+      form.appendChild(op);
+      const r = document.createElement('input'); 
+      r.name = 'row'; 
+      r.value = String(row); 
+      form.appendChild(r);
+      document.body.appendChild(form); 
+      form.submit(); 
+      setTimeout(() => form.remove(), 0);
     }
 
-    // Submit form
     f.addEventListener('submit', (e) => {
-      if (f.website && f.website.value) { e.preventDefault(); setMsg('Bloccato', 'err'); return; }
-      if (!f.titolo.value.trim() || !f.suggerimento.value.trim()) { e.preventDefault(); setMsg('Compila i campi obbligatori', 'err'); return; }
-      setMsg('Invio in corso…'); btn.disabled = true; lastOp = 'save'; pauseAndResume();
+      if (f.website && f.website.value) { 
+        e.preventDefault(); 
+        setMsg('Bloccato', 'err'); 
+        return; 
+      }
+      if (!f.titolo.value.trim() || !f.suggerimento.value.trim()) { 
+        e.preventDefault(); 
+        setMsg('Compila tutti i campi obbligatori', 'err'); 
+        return; 
+      }
+      setMsg('Invio in corso…'); 
+      btn.disabled = true; 
+      lastOp = 'save'; 
+      showLoading();
+      pauseAndResume();
     });
 
-    // Iframe response
     sink.addEventListener('load', () => {
-      if (lastOp === 'save') { setMsg('Inserito correttamente', 'ok'); f.reset(); btn.disabled = false; }
-      loadAll(); lastOp = null;
+      hideLoading();
+      if (lastOp === 'save') { 
+        setMsg('✓ Suggerimento inserito con successo!', 'ok'); 
+        f.reset(); 
+        btn.disabled = false; 
+      }
+      loadAll(); 
+      lastOp = null;
     });
 
-    document.addEventListener('DOMContentLoaded', loadAll);
+    document.addEventListener('DOMContentLoaded', () => {
+      showLoading();
+      loadAll().then(() => hideLoading());
+    });
   </script>
 </body>
 </html>

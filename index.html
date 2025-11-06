@@ -14,18 +14,25 @@
     .msg { margin-top: 10px; font-size: .95rem; }
     .ok { color: #0a6; }
     .err { color: #b00; }
+    /* honeypot anti-bot */
+    .hp { position: absolute; left: -9999px; top: -9999px; }
   </style>
 </head>
 <body>
   <h1>Inserisci suggerimento</h1>
 
-  <!-- Sostituisci con l'URL /exec reale della tua Web App -->
-  <form id="f" action="https://script.google.com/macros/s/REPLACE_WITH_EXEC_URL/exec" method="POST" target="sink" novalidate>
+  <!-- URL /exec reale -->
+  <form id="f"
+        action="https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec"
+        method="POST" target="sink" novalidate autocomplete="off">
     <input type="hidden" name="op" value="save">
+
+    <!-- honeypot: deve restare vuoto -->
+    <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
 
     <div class="row">
       <label for="titolo">Titolo</label>
-      <input type="text" id="titolo" name="titolo" required autocomplete="off">
+      <input type="text" id="titolo" name="titolo" required>
     </div>
 
     <div class="row">
@@ -47,30 +54,31 @@
     <div id="msg" class="msg" aria-live="polite"></div>
   </form>
 
-  <!-- Iframe nascosto per ricevere la risposta e evitare CORS -->
+  <!-- Iframe nascosto per evitare CORS -->
   <iframe name="sink" style="display:none"></iframe>
 
   <script>
     const f = document.getElementById('f');
     const msg = document.getElementById('msg');
     const btn = document.getElementById('btn');
+    const sink = document.querySelector('iframe[name="sink"]');
 
-    const setMsg = (t, cls='') => {
-      msg.textContent = t;
-      msg.className = 'msg ' + cls;
-    };
+    const setMsg = (t, cls='') => { msg.textContent = t; msg.className = 'msg ' + cls; };
 
-    f.addEventListener('submit', () => {
+    f.addEventListener('submit', (e) => {
+      // blocca invii bot (honeypot)
+      if (f.website && f.website.value) { e.preventDefault(); setMsg('Bloccato', 'err'); return; }
+      // validazioni minime lato client
+      if (!f.titolo.value.trim() || !f.suggerimento.value.trim()) { e.preventDefault(); setMsg('Compila i campi obbligatori', 'err'); return; }
       setMsg('Invio in corso…');
       btn.disabled = true;
     });
 
-    // L'iframe carica sempre una risposta testuale ('OK' o 'ERRORE: ...')
-    document.querySelector('iframe[name="sink"]').addEventListener('load', () => {
-      // Non possiamo leggere la risposta per limiti CORS → feedback ottimistico
+    // L’iframe carica una risposta (redirect incluso). Conferma ottimistica.
+    sink.addEventListener('load', () => {
       setMsg('Inserito correttamente', 'ok');
       f.reset();
-      document.getElementById('likes').value = 0;
+      f.likes.value = 0;
       btn.disabled = false;
     });
   </script>

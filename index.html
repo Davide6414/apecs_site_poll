@@ -14,11 +14,10 @@
     .msg { margin-top: 10px; font-size: .95rem; }
     .ok { color: #0a6; }
     .err { color: #b00; }
-    /* honeypot anti-bot */
     .hp { position: absolute; left: -9999px; top: -9999px; }
 
-    /* cards carousel */
-    .carousel-wrap { margin-bottom: 24px; }
+    /* carousel */
+    .carousel-wrap { margin-bottom: 24px; position: relative; }
     .carousel-title { margin: 0 0 8px; font-size: 1.2rem; }
     .carousel { position: relative; overflow: hidden; border: 1px solid #e3e3e3; border-radius: 12px; background: #fff; }
     .track { display: flex; flex-direction: column; will-change: transform; transition: transform .6s ease-in-out; }
@@ -28,6 +27,17 @@
     .meta { font-size: .9rem; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
     .like-btn { border: 1px solid #ddd; background: #f7f7f7; border-radius: 8px; padding: 4px 8px; cursor: pointer; }
     .like-btn[disabled] { opacity: .6; cursor: default; }
+
+    /* controls */
+    .controls { position: absolute; inset: 0; pointer-events: none; }
+    .ctrl-btn {
+      pointer-events: auto; position: absolute; top: 50%; transform: translateY(-50%);
+      border: 1px solid #ddd; background: rgba(255,255,255,.9); border-radius: 999px;
+      padding: 8px 12px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .ctrl-prev { left: 8px; }
+    .ctrl-next { right: 8px; }
+    .ctrl-btn[disabled] { opacity: .5; cursor: default; }
 
     /* loading */
     .loading { display: inline-flex; align-items: center; gap: 8px; color: #555; margin: 8px 0 16px; }
@@ -45,6 +55,10 @@
     </div>
     <div id="carousel" class="carousel" aria-live="polite">
       <div id="track" class="track"></div>
+      <div class="controls" aria-hidden="false">
+        <button id="prevBtn" type="button" class="ctrl-btn ctrl-prev" aria-label="Indietro">◀</button>
+        <button id="nextBtn" type="button" class="ctrl-btn ctrl-next" aria-label="Avanti">▶</button>
+      </div>
     </div>
   </div>
 
@@ -53,7 +67,6 @@
         action="https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec"
         method="POST" target="sink" novalidate autocomplete="off">
     <input type="hidden" name="op" value="save">
-    <!-- honeypot -->
     <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
 
     <div class="row">
@@ -70,7 +83,6 @@
     <div id="msg" class="msg" aria-live="polite"></div>
   </form>
 
-  <!-- Iframe nascosto per evitare CORS sul POST -->
   <iframe name="sink" style="display:none"></iframe>
 
   <script>
@@ -84,12 +96,15 @@
     const carousel = document.getElementById('carousel');
     const track = document.getElementById('track');
     const cardsLoading = document.getElementById('cardsLoading');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
 
     let lastOp = null; // 'save' | 'like'
     let slides = [];
     let slideH = 0;
     let cur = 0;
     let timer = null;
+    let resumeTimer = null;
 
     const setMsg = (t, cls='') => { msg.textContent = t; msg.className = 'msg ' + cls; };
 
@@ -128,7 +143,11 @@
     }
 
     function renderCards(rows) {
-      if (!rows.length) { track.innerHTML = '<div class="card"><p>Nessun suggerimento presente.</p></div>'; calibrate(); return; }
+      if (!rows.length) {
+        track.innerHTML = '<div class="card"><p>Nessun suggerimento presente.</p></div>';
+        calibrate();
+        return;
+      }
       const norm = rows.map((o) => ({
         _row: o._row,
         titolo: o.titolo,
@@ -151,12 +170,12 @@
 
       calibrate();
       startAuto();
+      updateControlsState();
     }
 
     function calibrate() {
       slides = Array.from(track.children);
       if (slides.length === 0) { slideH = 0; carousel.style.height = 'auto'; return; }
-      // calcola altezza massima e uniforma le slide
       let maxH = 0;
       slides.forEach(s => { s.style.height = 'auto'; maxH = Math.max(maxH, s.offsetHeight); });
       slides.forEach(s => { s.style.height = maxH + 'px'; });
@@ -170,26 +189,54 @@
       if (slides.length === 0 || slideH === 0) return;
       cur = ((i % slides.length) + slides.length) % slides.length;
       track.style.transform = `translateY(-${cur * slideH}px)`;
+      updateControlsState();
     }
+
+    function next() { goTo(cur + 1); }
+    function prev() { goTo(cur - 1); }
 
     function startAuto() {
       stopAuto();
       if (slides.length <= 1) return;
-      timer = setInterval(() => goTo(cur + 1), 10000); // 10s
+      timer = setInterval(next, 10000); // 10s
     }
     function stopAuto() {
       if (timer) { clearInterval(timer); timer = null; }
+      if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
+    }
+    function pauseAndResume() {
+      stopAuto();
+      if (slides.length > 1) {
+        resumeTimer = setTimeout(() => startAuto(), 15000);
+      }
     }
 
-    // Delegazione click sui pulsanti like
+    function updateControlsState() {
+      const disabled = slides.length <= 1;
+      prevBtn.disabled = disabled;
+      nextBtn.disabled = disabled;
+    }
+
+    // Like delegato
     track.addEventListener('click', (e) => {
       const btnLike = e.target.closest('.like-btn');
       if (!btnLike) return;
       const row = Number(btnLike.dataset.row);
       submitLike(row, btnLike);
+      pauseAndResume();
     });
 
-    // Invio like via form nascosto nell'iframe per evitare CORS
+    // Controlli manuali
+    prevBtn.addEventListener('click', () => { prev(); pauseAndResume(); });
+    nextBtn.addEventListener('click', () => { next(); pauseAndResume(); });
+
+    // Tastiera ← →
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { prev(); pauseAndResume(); }
+      if (e.key === 'ArrowRight') { next(); pauseAndResume(); }
+    });
+
+    // Invio like via form nascosto nell'iframe
     function submitLike(row, btnEl) {
       if (!row || row < 2) return;
       if (btnEl) { btnEl.disabled = true; btnEl.textContent = '...'; }
@@ -218,6 +265,7 @@
       setMsg('Invio in corso…');
       btn.disabled = true;
       lastOp = 'save';
+      pauseAndResume();
     });
 
     sink.addEventListener('load', () => {

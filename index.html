@@ -21,7 +21,9 @@
     .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-top: 24px; }
     .card { border: 1px solid #e3e3e3; border-radius: 10px; padding: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.05); background: #fff; }
     .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
-    .meta { font-size: .9rem; color: #555; margin-bottom: 6px; }
+    .meta { font-size: .9rem; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .like-btn { border: 1px solid #ddd; background: #f7f7f7; border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+    .like-btn[disabled] { opacity: .6; cursor: default; }
   </style>
 </head>
 <body>
@@ -74,6 +76,8 @@
     const sink = document.querySelector('iframe[name="sink"]');
     const cards = document.getElementById('cards');
 
+    let lastOp = null; // 'save' | 'like'
+
     const setMsg = (t, cls='') => { msg.textContent = t; msg.className = 'msg ' + cls; };
 
     const escapeHtml = s => String(s ?? '')
@@ -83,7 +87,6 @@
 
     const fmtTs = v => {
       if (!v) return '';
-      // supporta stringa "yyyy-MM-dd HH:mm:ss" o seriale foglio
       if (typeof v === 'number') {
         const ms = Math.round((v - 25569) * 86400 * 1000);
         return new Date(ms).toLocaleString('it-IT', { timeZone: 'Europe/Oslo' });
@@ -105,7 +108,8 @@
 
     function renderCards(rows) {
       if (!rows.length) { cards.innerHTML = '<p>Nessun suggerimento presente.</p>'; return; }
-      const norm = rows.map(o => ({
+      const norm = rows.map((o) => ({
+        _row: o._row, // riga del foglio per like
         titolo: o.titolo,
         suggerimento: o.suggerimento,
         likes: Number(o.numero_like ?? o.likes ?? 0),
@@ -115,27 +119,63 @@
       cards.innerHTML = norm.map(o => `
         <article class="card">
           <h3>${escapeHtml(o.titolo)}</h3>
-          <div class="meta">👍 ${o.likes} · ${fmtTs(o.ts)}</div>
+          <div class="meta">
+            <span>👍 <strong>${o.likes}</strong></span>
+            <button type="button" class="like-btn" data-row="${o._row}">Metti like</button>
+            <span>· ${fmtTs(o.ts)}</span>
+          </div>
           <p>${escapeHtml(o.suggerimento)}</p>
         </article>`).join('');
     }
 
+    // Invio like via form nascosto nell'iframe per evitare CORS
+    function submitLike(row, btnEl) {
+      if (!row || row < 2) return;
+      if (btnEl) btnEl.disabled = true;
+      lastOp = 'like';
+
+      const form = document.createElement('form');
+      form.action = API;
+      form.method = 'POST';
+      form.target = 'sink';
+      form.style.display = 'none';
+
+      const op = document.createElement('input');
+      op.name = 'op'; op.value = 'like'; form.appendChild(op);
+
+      const r = document.createElement('input');
+      r.name = 'row'; r.value = String(row); form.appendChild(r);
+
+      document.body.appendChild(form);
+      form.submit();
+      setTimeout(() => form.remove(), 0);
+    }
+
+    // Delegazione click sui pulsanti like
+    cards.addEventListener('click', (e) => {
+      const btnLike = e.target.closest('.like-btn');
+      if (!btnLike) return;
+      const row = Number(btnLike.dataset.row);
+      submitLike(row, btnLike);
+    });
+
     f.addEventListener('submit', (e) => {
-      // blocca invii bot (honeypot)
       if (f.website && f.website.value) { e.preventDefault(); setMsg('Bloccato', 'err'); return; }
-      // validazioni minime lato client
       if (!f.titolo.value.trim() || !f.suggerimento.value.trim()) { e.preventDefault(); setMsg('Compila i campi obbligatori', 'err'); return; }
       setMsg('Invio in corso…');
       btn.disabled = true;
+      lastOp = 'save';
     });
 
-    // Conferma ottimistica + refresh elenco
     sink.addEventListener('load', () => {
-      setMsg('Inserito correttamente', 'ok');
-      f.reset();
-      f.likes.value = 0;
-      btn.disabled = false;
+      if (lastOp === 'save') {
+        setMsg('Inserito correttamente', 'ok');
+        f.reset();
+        f.likes.value = 0;
+        btn.disabled = false;
+      }
       loadAll();
+      lastOp = null;
     });
 
     document.addEventListener('DOMContentLoaded', loadAll);

@@ -24,6 +24,13 @@
     .meta { font-size: .9rem; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
     .like-btn { border: 1px solid #ddd; background: #f7f7f7; border-radius: 8px; padding: 4px 8px; cursor: pointer; }
     .like-btn[disabled] { opacity: .6; cursor: default; }
+
+    /* loading */
+    .loading { display: inline-flex; align-items: center; gap: 8px; color: #555; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; animation: blink 1s infinite ease-in-out; }
+    .dot:nth-child(2) { animation-delay: .2s; }
+    .dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink { 0%,80%,100%{ opacity:.2 } 40%{ opacity:1 } }
   </style>
 </head>
 <body>
@@ -48,11 +55,6 @@
     </div>
 
     <div class="row">
-      <label for="likes">Numero di like</label>
-      <input type="number" id="likes" name="likes" min="0" step="1" value="0" required>
-    </div>
-
-    <div class="row">
       <label for="timestamp">Timestamp (opzionale)</label>
       <input type="datetime-local" id="timestamp" name="timestamp">
     </div>
@@ -63,6 +65,9 @@
 
   <h2>Suggerimenti esistenti</h2>
   <div id="cards" class="cards" aria-live="polite"></div>
+  <div id="cardsLoading" class="loading" style="display:none" aria-live="polite">
+    <span>Caricamento</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+  </div>
 
   <!-- Iframe nascosto per evitare CORS sul POST -->
   <iframe name="sink" style="display:none"></iframe>
@@ -75,6 +80,7 @@
     const btn = document.getElementById('btn');
     const sink = document.querySelector('iframe[name="sink"]');
     const cards = document.getElementById('cards');
+    const cardsLoading = document.getElementById('cardsLoading');
 
     let lastOp = null; // 'save' | 'like'
 
@@ -95,21 +101,29 @@
       return isNaN(d) ? '' : d.toLocaleString('it-IT', { timeZone: 'Europe/Oslo' });
     };
 
+    function setCardsLoading(on) {
+      cardsLoading.style.display = on ? 'inline-flex' : 'none';
+      if (on) cards.innerHTML = '';
+    }
+
     async function loadAll() {
       try {
+        setCardsLoading(true);
         const r = await fetch(`${API}?op=all`, { method: 'GET' });
         const j = await r.json();
         if (!j.ok) throw new Error(j.message || 'Errore lettura');
         renderCards(j.rows || []);
       } catch (err) {
         cards.innerHTML = `<div class="card"><div class="meta">Errore</div><p>${escapeHtml(err.message)}</p></div>`;
+      } finally {
+        setCardsLoading(false);
       }
     }
 
     function renderCards(rows) {
       if (!rows.length) { cards.innerHTML = '<p>Nessun suggerimento presente.</p>'; return; }
       const norm = rows.map((o) => ({
-        _row: o._row, // riga del foglio per like
+        _row: o._row,
         titolo: o.titolo,
         suggerimento: o.suggerimento,
         likes: Number(o.numero_like ?? o.likes ?? 0),
@@ -131,7 +145,10 @@
     // Invio like via form nascosto nell'iframe per evitare CORS
     function submitLike(row, btnEl) {
       if (!row || row < 2) return;
-      if (btnEl) btnEl.disabled = true;
+      if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.textContent = '...';
+      }
       lastOp = 'like';
 
       const form = document.createElement('form');
@@ -171,7 +188,6 @@
       if (lastOp === 'save') {
         setMsg('Inserito correttamente', 'ok');
         f.reset();
-        f.likes.value = 0;
         btn.disabled = false;
       }
       loadAll();

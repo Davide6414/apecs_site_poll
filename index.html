@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Invia suggerimento</title>
+  <title>Suggerimenti</title>
   <style>
     body { font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; }
     form { display: grid; gap: 12px; }
@@ -17,16 +17,20 @@
     /* honeypot anti-bot */
     .hp { position: absolute; left: -9999px; top: -9999px; }
 
-    /* cards */
-    .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-top: 24px; }
-    .card { border: 1px solid #e3e3e3; border-radius: 10px; padding: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.05); background: #fff; }
+    /* cards carousel */
+    .carousel-wrap { margin-bottom: 24px; }
+    .carousel-title { margin: 0 0 8px; font-size: 1.2rem; }
+    .carousel { position: relative; overflow: hidden; border: 1px solid #e3e3e3; border-radius: 12px; background: #fff; }
+    .track { display: flex; flex-direction: column; will-change: transform; transition: transform .6s ease-in-out; }
+    .card { box-sizing: border-box; border-bottom: 1px solid #eee; padding: 14px 12px; }
+    .card:last-child { border-bottom: 0; }
     .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
     .meta { font-size: .9rem; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
     .like-btn { border: 1px solid #ddd; background: #f7f7f7; border-radius: 8px; padding: 4px 8px; cursor: pointer; }
     .like-btn[disabled] { opacity: .6; cursor: default; }
 
     /* loading */
-    .loading { display: inline-flex; align-items: center; gap: 8px; color: #555; }
+    .loading { display: inline-flex; align-items: center; gap: 8px; color: #555; margin: 8px 0 16px; }
     .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; animation: blink 1s infinite ease-in-out; }
     .dot:nth-child(2) { animation-delay: .2s; }
     .dot:nth-child(3) { animation-delay: .4s; }
@@ -34,14 +38,22 @@
   </style>
 </head>
 <body>
-  <h1>Inserisci suggerimento</h1>
+  <div class="carousel-wrap">
+    <h2 class="carousel-title">Suggerimenti</h2>
+    <div id="cardsLoading" class="loading" style="display:none" aria-live="polite">
+      <span>Caricamento</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+    <div id="carousel" class="carousel" aria-live="polite">
+      <div id="track" class="track"></div>
+    </div>
+  </div>
 
+  <h1>Inserisci suggerimento</h1>
   <form id="f"
         action="https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec"
         method="POST" target="sink" novalidate autocomplete="off">
     <input type="hidden" name="op" value="save">
-
-    <!-- honeypot: deve restare vuoto -->
+    <!-- honeypot -->
     <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
 
     <div class="row">
@@ -54,20 +66,9 @@
       <textarea id="suggerimento" name="suggerimento" required></textarea>
     </div>
 
-    <div class="row">
-      <label for="timestamp">Timestamp (opzionale)</label>
-      <input type="datetime-local" id="timestamp" name="timestamp">
-    </div>
-
     <button type="submit" id="btn">Invia</button>
     <div id="msg" class="msg" aria-live="polite"></div>
   </form>
-
-  <h2>Suggerimenti esistenti</h2>
-  <div id="cards" class="cards" aria-live="polite"></div>
-  <div id="cardsLoading" class="loading" style="display:none" aria-live="polite">
-    <span>Caricamento</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-  </div>
 
   <!-- Iframe nascosto per evitare CORS sul POST -->
   <iframe name="sink" style="display:none"></iframe>
@@ -79,10 +80,16 @@
     const msg = document.getElementById('msg');
     const btn = document.getElementById('btn');
     const sink = document.querySelector('iframe[name="sink"]');
-    const cards = document.getElementById('cards');
+
+    const carousel = document.getElementById('carousel');
+    const track = document.getElementById('track');
     const cardsLoading = document.getElementById('cardsLoading');
 
     let lastOp = null; // 'save' | 'like'
+    let slides = [];
+    let slideH = 0;
+    let cur = 0;
+    let timer = null;
 
     const setMsg = (t, cls='') => { msg.textContent = t; msg.className = 'msg ' + cls; };
 
@@ -103,7 +110,7 @@
 
     function setCardsLoading(on) {
       cardsLoading.style.display = on ? 'inline-flex' : 'none';
-      if (on) cards.innerHTML = '';
+      if (on) { track.innerHTML = ''; stopAuto(); }
     }
 
     async function loadAll() {
@@ -114,14 +121,14 @@
         if (!j.ok) throw new Error(j.message || 'Errore lettura');
         renderCards(j.rows || []);
       } catch (err) {
-        cards.innerHTML = `<div class="card"><div class="meta">Errore</div><p>${escapeHtml(err.message)}</p></div>`;
+        track.innerHTML = `<div class="card"><div class="meta">Errore</div><p>${escapeHtml(err.message)}</p></div>`;
       } finally {
         setCardsLoading(false);
       }
     }
 
     function renderCards(rows) {
-      if (!rows.length) { cards.innerHTML = '<p>Nessun suggerimento presente.</p>'; return; }
+      if (!rows.length) { track.innerHTML = '<div class="card"><p>Nessun suggerimento presente.</p></div>'; calibrate(); return; }
       const norm = rows.map((o) => ({
         _row: o._row,
         titolo: o.titolo,
@@ -130,7 +137,8 @@
         ts: o.timestamp
       }));
       norm.sort((a,b) => (b.likes - a.likes) || (new Date(b.ts) - new Date(a.ts)));
-      cards.innerHTML = norm.map(o => `
+
+      track.innerHTML = norm.map(o => `
         <article class="card">
           <h3>${escapeHtml(o.titolo)}</h3>
           <div class="meta">
@@ -140,15 +148,51 @@
           </div>
           <p>${escapeHtml(o.suggerimento)}</p>
         </article>`).join('');
+
+      calibrate();
+      startAuto();
     }
+
+    function calibrate() {
+      slides = Array.from(track.children);
+      if (slides.length === 0) { slideH = 0; carousel.style.height = 'auto'; return; }
+      // calcola altezza massima e uniforma le slide
+      let maxH = 0;
+      slides.forEach(s => { s.style.height = 'auto'; maxH = Math.max(maxH, s.offsetHeight); });
+      slides.forEach(s => { s.style.height = maxH + 'px'; });
+      slideH = maxH;
+      carousel.style.height = maxH + 'px';
+      cur = 0;
+      track.style.transform = 'translateY(0)';
+    }
+
+    function goTo(i) {
+      if (slides.length === 0 || slideH === 0) return;
+      cur = ((i % slides.length) + slides.length) % slides.length;
+      track.style.transform = `translateY(-${cur * slideH}px)`;
+    }
+
+    function startAuto() {
+      stopAuto();
+      if (slides.length <= 1) return;
+      timer = setInterval(() => goTo(cur + 1), 10000); // 10s
+    }
+    function stopAuto() {
+      if (timer) { clearInterval(timer); timer = null; }
+    }
+
+    // Delegazione click sui pulsanti like
+    track.addEventListener('click', (e) => {
+      const btnLike = e.target.closest('.like-btn');
+      if (!btnLike) return;
+      const row = Number(btnLike.dataset.row);
+      submitLike(row, btnLike);
+    });
 
     // Invio like via form nascosto nell'iframe per evitare CORS
     function submitLike(row, btnEl) {
       if (!row || row < 2) return;
-      if (btnEl) {
-        btnEl.disabled = true;
-        btnEl.textContent = '...';
-      }
+      if (btnEl) { btnEl.disabled = true; btnEl.textContent = '...'; }
       lastOp = 'like';
 
       const form = document.createElement('form');
@@ -168,14 +212,6 @@
       setTimeout(() => form.remove(), 0);
     }
 
-    // Delegazione click sui pulsanti like
-    cards.addEventListener('click', (e) => {
-      const btnLike = e.target.closest('.like-btn');
-      if (!btnLike) return;
-      const row = Number(btnLike.dataset.row);
-      submitLike(row, btnLike);
-    });
-
     f.addEventListener('submit', (e) => {
       if (f.website && f.website.value) { e.preventDefault(); setMsg('Bloccato', 'err'); return; }
       if (!f.titolo.value.trim() || !f.suggerimento.value.trim()) { e.preventDefault(); setMsg('Compila i campi obbligatori', 'err'); return; }
@@ -192,6 +228,11 @@
       }
       loadAll();
       lastOp = null;
+    });
+
+    window.addEventListener('resize', () => calibrate());
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopAuto(); else startAuto();
     });
 
     document.addEventListener('DOMContentLoaded', loadAll);

@@ -1,4 +1,3 @@
-<!-- File: index.html (GitHub Pages) -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -18,7 +17,9 @@
 </head>
 <body>
   <h1>Inserisci dati</h1>
-  <form id="f" novalidate>
+
+  <!-- Sostituisci l'URL con quello della tua Web App (deve terminare con /exec) -->
+  <form id="f" action="https://script.google.com/macros/s/REPLACE_WITH_EXEC_URL/exec" method="POST" target="sink" novalidate>
     <div class="row">
       <label for="ts">Timestamp (opzionale)</label>
       <input type="datetime-local" id="ts" name="timestamp">
@@ -35,82 +36,38 @@
       <label for="likes">Numero di like</label>
       <input type="number" id="likes" name="likes" min="0" step="1" value="0" required>
     </div>
+
     <button type="submit" id="btn">Invia</button>
     <div id="msg" class="msg" aria-live="polite"></div>
   </form>
 
-  <script>
-    const WEBAPP_URL = 'https://script.google.com/macros/s/REPLACE_WITH_/exec'; // /exec
-    const f = document.getElementById('f');
-    const msg = document.getElementById('msg');
-    const btn = document.getElementById('btn');
+  <!-- Iframe “sink” per evitare navigazione e bypass CORS -->
+  <iframe name="sink" style="display:none"></iframe>
 
+  <script>
+    const f = document.getElementById('f');
+    const btn = document.getElementById('btn');
+    const msg = document.getElementById('msg');
     const setMsg = (t,c='') => { msg.textContent=t; msg.className='msg '+c; };
 
-    f.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      setMsg('');
-      const titolo = document.getElementById('titolo').value.trim();
-      const suggerimento = document.getElementById('suggerimento').value.trim();
-      const ts = document.getElementById('ts').value;
-      const likesVal = document.getElementById('likes').value;
-      const likes = Number(likesVal === '' ? 0 : likesVal);
-
-      if(!titolo) return setMsg('Titolo richiesto','err');
-      if(!suggerimento) return setMsg('Suggerimento richiesto','err');
-      if(!Number.isFinite(likes) || likes < 0) return setMsg('Likes non valido','err');
-
-      const payload = {
-        timestamp: ts ? new Date(ts).toISOString() : null,
-        titolo, suggerimento, likes
-      };
-
-      btn.disabled = true;
+    f.addEventListener('submit', () => {
       setMsg('Invio in corso…');
+      btn.disabled = true;
+    });
 
+    // Conferma ottimistica quando l'iframe ha caricato la risposta testuale ("OK" o "ERRORE: ...")
+    document.querySelector('iframe[name="sink"]').addEventListener('load', async function() {
       try {
-        const r = await fetch(WEBAPP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        // Se CORS è correttamente esposto, leggiamo la risposta
-        const ct = r.headers.get('content-type') || '';
-        if (r.ok && ct.includes('application/json')) {
-          const j = await r.json();
-          if (j.ok) {
-            setMsg('Inserito','ok');
-            f.reset();
-            document.getElementById('likes').value = 0;
-          } else {
-            setMsg('Errore: ' + (j.error || 'sconosciuto'),'err');
-          }
-        } else if (!r.ok) {
-          // Tentativo fallback
-          throw new Error('HTTP '+r.status);
-        } else {
-          // Alcune distribuzioni non espongono CORS: fallback con sendBeacon
-          fallbackBeacon(payload);
-        }
-      } catch (err) {
-        // Fallback definitivo: sendBeacon
-        fallbackBeacon(payload);
+        // Non possiamo leggere direttamente l'iframe cross-origin; forniamo feedback ottimistico.
+        setMsg('Inserito', 'ok');
+        f.reset();
+        document.getElementById('likes').value = 0;
+      } catch (_) {
+        setMsg('Operazione completata', 'ok');
       } finally {
         btn.disabled = false;
       }
     });
-
-    function fallbackBeacon(data){
-      const ok = navigator.sendBeacon?.(WEBAPP_URL, new Blob([JSON.stringify(data)], {type:'text/plain'}));
-      if (ok) {
-        setMsg('Inviato (conferma non disponibile per limiti CORS)','ok');
-        f.reset();
-        document.getElementById('likes').value = 0;
-      } else {
-        setMsg('Invio non riuscito','err');
-      }
-    }
   </script>
 </body>
 </html>

@@ -6,7 +6,7 @@
   <title>Suggerimenti</title>
   <style>
     :root{
-      --bg:#ffffff;
+      --bg:#f0f7ff;
       --card:#ffffff;
       --text:#0a4d8f;
       --muted:#5c9fd6;
@@ -855,7 +855,7 @@
       draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.fillStyle = `rgba(30, 136, 229, ${this.opacity * 0.6})`;
         ctx.fill();
       }
     }
@@ -1053,6 +1053,8 @@
         btnEl.textContent = '⏳ ...'; 
       }
       lastOp = 'like';
+      showLoading();
+      
       const form = document.createElement('form');
       form.action = API; 
       form.method = 'POST'; 

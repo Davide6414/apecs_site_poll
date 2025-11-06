@@ -5,68 +5,81 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Invia suggerimento</title>
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:720px;margin:24px auto;padding:0 12px}
-    form{display:grid;gap:12px}
-    label{font-weight:600}
-    input,textarea,button{padding:8px;font-size:1rem}
-    textarea{resize:vertical;min-height:100px}
-    .row{display:grid;gap:6px}
-    .msg{margin-top:10px;font-size:.95rem}
-    .ok{color:#0a6}.err{color:#b00}
+    body { font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; }
+    form { display: grid; gap: 12px; }
+    label { font-weight: 600; }
+    input, textarea, button { padding: 8px; font-size: 1rem; }
+    textarea { resize: vertical; min-height: 100px; }
+    .row { display: grid; gap: 6px; }
+    .msg { margin-top: 10px; font-size: .95rem; }
+    .ok { color: #0a6; }
+    .err { color: #b00; }
+    /* honeypot anti-bot */
+    .hp { position: absolute; left: -9999px; top: -9999px; }
   </style>
 </head>
 <body>
   <h1>Inserisci suggerimento</h1>
 
-  <form id="f" novalidate autocomplete="off">
+  <!-- URL /exec reale -->
+  <form id="f"
+        action="https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec"
+        method="POST" target="sink" novalidate autocomplete="off">
     <input type="hidden" name="op" value="save">
+
+    <!-- honeypot: deve restare vuoto -->
+    <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
+
     <div class="row">
       <label for="titolo">Titolo</label>
       <input type="text" id="titolo" name="titolo" required>
     </div>
+
     <div class="row">
       <label for="suggerimento">Suggerimento</label>
       <textarea id="suggerimento" name="suggerimento" required></textarea>
     </div>
+
     <div class="row">
       <label for="likes">Numero di like</label>
       <input type="number" id="likes" name="likes" min="0" step="1" value="0" required>
     </div>
+
     <div class="row">
       <label for="timestamp">Timestamp (opzionale)</label>
       <input type="datetime-local" id="timestamp" name="timestamp">
     </div>
+
     <button type="submit" id="btn">Invia</button>
     <div id="msg" class="msg" aria-live="polite"></div>
   </form>
 
+  <!-- Iframe nascosto per evitare CORS -->
+  <iframe name="sink" style="display:none"></iframe>
+
   <script>
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwc4nU2fI4V65xhwER1tIsaxC5eHHqUPY2xKEVTh4FaYtNxGjLlC4TvoxqiFi5UPKMJ/exec";
-    const f = document.getElementById('f'), btn = document.getElementById('btn'), msg = document.getElementById('msg');
-    const setMsg=(t,c='')=>{ msg.textContent=t; msg.className='msg '+c; };
+    const f = document.getElementById('f');
+    const msg = document.getElementById('msg');
+    const btn = document.getElementById('btn');
+    const sink = document.querySelector('iframe[name="sink"]');
 
-    f.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const titolo = f.titolo.value.trim();
-      const suggerimento = f.suggerimento.value.trim();
-      const likes = Number(f.likes.value === '' ? 0 : f.likes.value);
-      const ts = f.timestamp.value ? new Date(f.timestamp.value).toISOString() : '';
-      if(!titolo || !suggerimento || !Number.isFinite(likes) || likes<0){ setMsg('Controlla i campi','err'); return; }
+    const setMsg = (t, cls='') => { msg.textContent = t; msg.className = 'msg ' + cls; };
 
-      const body = new URLSearchParams({ op:'save', titolo, suggerimento, likes:String(likes), timestamp:ts });
-      btn.disabled = true; setMsg('Invio in corso…');
+    f.addEventListener('submit', (e) => {
+      // blocca invii bot (honeypot)
+      if (f.website && f.website.value) { e.preventDefault(); setMsg('Bloccato', 'err'); return; }
+      // validazioni minime lato client
+      if (!f.titolo.value.trim() || !f.suggerimento.value.trim()) { e.preventDefault(); setMsg('Compila i campi obbligatori', 'err'); return; }
+      setMsg('Invio in corso…');
+      btn.disabled = true;
+    });
 
-      try {
-        // no-cors evita preflight e non produce errori/403 in console (risposta opaca)
-        await fetch(WEBAPP_URL, { method:'POST', mode:'no-cors',
-          headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' },
-          body
-        });
-        setMsg('Inserito correttamente','ok');
-        f.reset(); f.likes.value = 0;
-      } catch {
-        setMsg('Invio non riuscito','err');
-      } finally { btn.disabled = false; }
+    // L’iframe carica una risposta (redirect incluso). Conferma ottimistica.
+    sink.addEventListener('load', () => {
+      setMsg('Inserito correttamente', 'ok');
+      f.reset();
+      f.likes.value = 0;
+      btn.disabled = false;
     });
   </script>
 </body>
